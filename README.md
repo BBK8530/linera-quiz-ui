@@ -26,7 +26,7 @@ This is a feature-rich quiz application built on the Linera SDK that enables cre
 
 ### Running with Docker
 
-Docker support is available through `compose.yaml`
+Docker support is available   
 
 ```bash
 docker compose up --force-recreate
