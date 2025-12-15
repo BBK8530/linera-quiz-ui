@@ -1,36 +1,40 @@
-# Linera buildathon submission template
+# Quiz Application
 
-This template provides a Docker container with all the necessary
-dependencies to build and run a local Linera application against a
-local network.
+## Project Overview
 
-If you want to submit an app running against a local network, please
-use this template.  If you have provided a link to a live demo running
-against the testnet, you do not need to use this template (but it may
-be helpful anyway!).
+This is a feature-rich quiz application built on the Linera SDK that enables creating interactive quizzes with multiple question types, real-time scoring, and leaderboard functionality. The application provides a comprehensive GraphQL API for managing quizzes, submitting answers, and tracking performance metrics.
 
-## Structure
+### Key Features
 
-The template provides a `Dockerfile` describing a container with all the
-necessary dependencies for Linera backend and frontend development, as
-well as a simple `compose.yaml` file for Docker Compose that mounts
-the current directory at `/build` and exposes the following ports:
+- Create and manage multiple-choice quizzes with configurable time limits
+- Support for multiple correct answers and weighted question points
+- Real-time scoring and detailed performance analytics
+- Global and quiz-specific leaderboards
+- User profile management with nickname customization
+- Time-based quiz availability (start/end time configuration)
 
-- 5173: the frontend of your application (optional)
-- 8080: the Linera faucet
-- 9001: the localnet validator's proxy
-- 13001: the localnet validator itself
+### Code Structure
 
-Please keep this port structure, and make sure the `Dockerfile` or the
-`compose.yaml` defines a reasonable healthcheck for your app (the
-default waits for your frontend to be served on `localhost:5173`).
-Other internal structure is optional; feel free to change it.
+- `src/service.rs` - Service implementation containing GraphQL Schema and query handling
+- `src/lib.rs` - ABI definitions including data models and operation enums
+- `src/state.rs` - State definitions using Linera Views
+- `src/contract.rs` - Contract implementation with Linera SDK
+- `front-end` - Vue.js application for the quiz interface and user interactions
+- `run.bash`: Script to build and run the application locally
+- `compose.yaml`: Docker Compose configuration
+- `Dockerfile`: Docker configuration for containerized deployment
 
-## Usage
+### Running with Docker
 
-To get started, fill in `run.bash` with instructions to build and run
-your backend and (if applicable) frontend.
+Docker support is available through `compose.yaml`
 
-To test that your submission works, run `docker compose up
---force-recreate` and access your application frontend at
-`localhost:5173`.
+```bash
+docker compose up --force-recreate
+```
+
+The application will be accessible at:
+
+- Frontend: http://localhost:5173
+- GraphQL API: http://localhost:8080/chains/[CHAIN_ID]/applications/[APP_ID]
+
+The application uses the Linera SDK for smart contract development and GraphQL for the API layer.
