@@ -15,7 +15,7 @@
       <v-card-text class="px-8 mt-4">
         <v-text-field
           v-model="searchQuery"
-          placeholder="搜索参与者..."
+          placeholder="search participants..."
           variant="outlined"
           density="compact"
           prepend-inner-icon="mdi-magnify"
