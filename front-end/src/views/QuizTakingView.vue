@@ -265,7 +265,7 @@ const formatTime = (seconds: number): string => {
 // 格式化日期时间
 const formatDateTime = (timestampMs: string | number): string => {
   const date = new Date(parseInt(timestampMs as string));
-  return date.toLocaleString("zh-CN", {
+  return date.toLocaleString("en-US", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -285,11 +285,11 @@ const checkQuizTimeStatus = () => {
 
   if (now < startTime) {
     timeStatus.value = "not_started";
-    timeStatusMessage.value = `测验将在 ${formatDateTime(startTime)} 开始`;
+    timeStatusMessage.value = `Quiz will start at ${formatDateTime(startTime)}`;
     return false;
   } else if (now > endTime) {
     timeStatus.value = "ended";
-    timeStatusMessage.value = `测验已结束，结束时间为 ${formatDateTime(
+    timeStatusMessage.value = `Quiz has ended, end time was ${formatDateTime(
       quiz.value.endTime
     )}`;
     return false;
@@ -395,7 +395,7 @@ const submitQuiz = async () => {
     // 跳转到排名页面
     router.push(`/quiz-rank/${quizId}`);
   } catch (err) {
-    errorMessage.value = "提交失败，请稍后重试";
+    errorMessage.value = "Submission failed, please try again later";
     console.error("Quiz submission error:", err);
   }
 };
@@ -416,11 +416,11 @@ const initQuizData = async () => {
     await refetch();
 
     if (!quiz.value || quiz.value.questions.length === 0) {
-      errorMessage.value = "问卷不存在或内容为空";
+      errorMessage.value = "Quiz does not exist or has no content";
       return;
     }
   } catch (err) {
-    errorMessage.value = "加载问卷失败，请稍后重试";
+    errorMessage.value = "Failed to load quiz, please try again later";
     console.error("Error loading quiz:", err);
   } finally {
     loading.value = false;
@@ -477,8 +477,8 @@ onMounted(() => {
   watch(error, () => {
     if (error.value) {
       loading.value = false;
-      errorMessage.value = "无法加载测验数据，请稍后重试";
-      console.error("加载测验失败:", error.value);
+      errorMessage.value = "Failed to load quiz data, please try again later";
+      console.error("Failed to load quiz:", error.value);
     }
   });
 });
@@ -490,12 +490,12 @@ onUnmounted(() => {
   if (timeCheckInterval.value) clearInterval(timeCheckInterval.value);
 });
 
-// 监听GraphQL数据加载状态
+// Watch GraphQL data loading status
 watch([loading, error], () => {
   if (loading.value === false) {
     if (error.value) {
       errorMessage.value =
-        "加载问卷失败: " + (error.value?.message || "未知错误");
+        "Failed to load quiz: " + (error.value?.message || "Unknown error");
     }
   }
 });
