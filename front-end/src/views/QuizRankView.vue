@@ -7,7 +7,7 @@
         <div class="flex items-center justify-between w-full">
           <h1 class="text-2xl font-bold">{{ quizTitle }} Ranking</h1>
           <div class="text-white opacity-90">
-            Number of Participants: {{ participants }} | Average Score:
+            Participants: {{ participants }} | Average Score:
             {{ averageScore.toFixed(1) }}
           </div>
         </div>
@@ -239,6 +239,7 @@ const formatDate = (dateString: string | Date) => {
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      second: "2-digit",
     });
   } catch (error) {
     console.error("Failed to format date:", error);

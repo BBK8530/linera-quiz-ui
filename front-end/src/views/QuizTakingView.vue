@@ -161,7 +161,8 @@
                     rounded="xl"
                     class="p-5 hover:bg-primary/5 hover:border-primary/30 transition-all duration-300 transform hover:-translate-y-1"
                     :class="{
-                      'bg-primary/5 border-primary': selectedAnswers.includes(index),
+                      'bg-primary/5 border-primary':
+                        selectedAnswers.includes(index),
                     }"
                   >
                     <div class="flex items-center">
@@ -196,13 +197,13 @@
             class="px-8 py-6 bg-gray-50 border-t border-gray-100 justify-end"
           >
             <v-btn
-          @click="nextQuestion"
-          :disabled="selectedAnswers.length === 0"
-          color="primary"
-          variant="elevated"
-          size="large"
-          :elevation="selectedAnswers.length > 0 ? 4 : 0"
-        >
+              @click="nextQuestion"
+              :disabled="selectedAnswers.length === 0"
+              color="primary"
+              variant="elevated"
+              size="large"
+              :elevation="selectedAnswers.length > 0 ? 4 : 0"
+            >
               {{
                 currentQuestionIndex === quiz.questions.length - 1
                   ? "Submit quiz"
@@ -312,7 +313,7 @@ const checkQuizTimeStatus = () => {
     return false;
   } else if (now > endTime) {
     timeStatus.value = "ended";
-    timeStatusMessage.value = `Quiz has ended, end time is ${formatDateTime(
+    timeStatusMessage.value = `Quiz has ended, end time was ${formatDateTime(
       quiz.value.endTime
     )}`;
     return false;
@@ -349,13 +350,13 @@ const copyQuizLink = () => {
 
 // 选择答案
 const selectAnswer = (index: number) => {
-  if (currentQuestion.value?.type === 'radio') {
+  if (currentQuestion.value?.type === "radio") {
     // 单选：替换当前选择
     selectedAnswers.value = [index];
   } else {
     // 多选：切换选择状态
     if (selectedAnswers.value.includes(index)) {
-      selectedAnswers.value = selectedAnswers.value.filter(i => i !== index);
+      selectedAnswers.value = selectedAnswers.value.filter((i) => i !== index);
     } else {
       selectedAnswers.value.push(index);
     }
@@ -419,7 +420,7 @@ const submitQuiz = async () => {
       quizId: quizId, // 使用 snake_case 与合约匹配
       answers: answers.value.map((item) => ({
         questionId: item.questionId,
-        selectedAnswers: item.selectedAnswers
+        selectedAnswers: item.selectedAnswers,
       })), // 传递题目ID和答案
       timeTaken: totalTimeTaken.value * 1000, // 转换为毫秒
       nickName: authStore.currentUser.username || "QuizTaker",
@@ -529,7 +530,7 @@ onUnmounted(() => {
   if (timeCheckInterval.value) clearInterval(timeCheckInterval.value);
 });
 
-// 监听GraphQL数据加载状态
+// Watch GraphQL data loading status
 watch([loading, error], () => {
   if (loading.value === false) {
     if (error.value) {

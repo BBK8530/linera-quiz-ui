@@ -25,7 +25,15 @@
                 class="mb-4 mx-auto max-w-xs"
               ></v-text-field>
             </div>
-
+            <v-alert
+              v-if="errorMessage"
+              type="error"
+              variant="tonal"
+              class="mt-4"
+              density="compact"
+            >
+              {{ errorMessage }}
+            </v-alert>
             <v-btn
               type="submit"
               :loading="isLoading"
@@ -37,16 +45,6 @@
             >
               Confirm
             </v-btn>
-
-            <v-alert
-              v-if="errorMessage"
-              type="error"
-              variant="tonal"
-              class="mt-4"
-              density="compact"
-            >
-              {{ errorMessage }}
-            </v-alert>
           </v-form>
         </v-card-text>
       </v-card>
@@ -66,7 +64,10 @@ const authStore = useAuthStore();
 const isLoading = ref(false);
 const handleLogin = async () => {
   errorMessage.value = "";
-
+  if (!username.value) {
+    errorMessage.value = "Please enter a username";
+    return;
+  }
   try {
     const success = await authStore.login(username.value);
     if (success) {
@@ -88,4 +89,3 @@ body {
   margin: 0;
 }
 </style>
-

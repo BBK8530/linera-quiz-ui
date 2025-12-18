@@ -13,6 +13,7 @@ export default defineConfig({
   server: {
     host: "0.0.0.0", // 允许远程访问
     port: 5173,
+    allowedHosts: ["localhost", "127.0.0.1", "host.docker.internal"],
     strictPort: true, // 端口被占用时直接失败
     // 代理配置（如果后端也在本地）
     proxy: {
