@@ -34,10 +34,11 @@ impl QueryRoot {
                     .questions
                     .iter()
                     .map(|q| QuestionView {
-                        id: q.id,
+                        id: q.id.clone(),
                         text: q.text.clone(),
                         options: q.options.clone(),
                         points: q.points,
+                        question_type: q.question_type.clone(),
                     })
                     .collect(),
                 start_time: quiz.start_time.micros().to_string(),
@@ -65,10 +66,11 @@ impl QueryRoot {
                         .questions
                         .iter()
                         .map(|q| QuestionView {
-                            id: q.id,
+                            id: q.id.clone(),
                             text: q.text.clone(),
                             options: q.options.clone(),
                             points: q.points,
+                            question_type: q.question_type.clone(),
                         })
                         .collect(),
                     start_time: quiz.start_time.micros().to_string(),
@@ -211,10 +213,11 @@ impl QueryRoot {
                             .questions
                             .iter()
                             .map(|q| QuestionView {
-                                id: q.id,
+                                id: q.id.clone(),
                                 text: q.text.clone(),
                                 options: q.options.clone(),
                                 points: q.points,
+                                question_type: q.question_type.clone(),
                             })
                             .collect(),
                         start_time: quiz.start_time.micros().to_string(),
@@ -248,10 +251,11 @@ impl QueryRoot {
                         .questions
                         .iter()
                         .map(|q| QuestionView {
-                            id: q.id,
+                            id: q.id.clone(),
                             text: q.text.clone(),
                             options: q.options.clone(),
                             points: q.points,
+                            question_type: q.question_type.clone(),
                         })
                         .collect(),
                     start_time: quiz_set.start_time.micros().to_string(),

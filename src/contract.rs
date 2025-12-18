@@ -14,6 +14,8 @@ use linera_sdk::{
 
 use crate::state::{Question, QuizSet, QuizState, UserAttempt};
 use quiz::{CreateQuizParams, LeaderboardEntry, Operation, SubmitAnswersParams};
+use rand::distributions::Alphanumeric;
+use rand::prelude::*;
 
 pub struct QuizContract {
     state: QuizState,
@@ -130,13 +132,25 @@ impl QuizContract {
             questions: params
                 .questions
                 .into_iter()
-                .enumerate()
-                .map(|(i, q)| Question {
-                    id: i as u32,
-                    text: q.text,
-                    options: q.options,
-                    correct_options: q.correct_options,
-                    points: q.points,
+                .map(|q| {
+                    // 生成随机ID（16位字母数字字符串）
+                    let id: String = rand::thread_rng()
+                        .sample_iter(&Alphanumeric)
+                        .take(16)
+                        .map(char::from)
+                        .collect();
+                    
+                    // 根据正确答案的个数设置type
+                    let question_type = if q.correct_options.len() > 1 { "checkbox" } else { "radio" };
+                    
+                    Question {
+                        id,
+                        text: q.text,
+                        options: q.options,
+                        correct_options: q.correct_options,
+                        points: q.points,
+                        question_type: question_type.to_string(),
+                    }
                 })
                 .collect(),
             time_limit: params.time_limit,
@@ -183,6 +197,12 @@ impl QuizContract {
             panic!("User has already attempted this quiz");
         }
 
+        // 创建题目ID到题目的映射，用于快速查找
+        let mut question_map = std::collections::HashMap::new();
+        for question in &quiz_set.questions {
+            question_map.insert(question.id.clone(), question);
+        }
+
         // 验证答案数量是否匹配问题数量
         assert_eq!(
             params.answers.len(),
@@ -192,11 +212,25 @@ impl QuizContract {
 
         // 计算得分
         let mut score = 0;
-        for (i, user_answers) in params.answers.iter().enumerate() {
-            let question = &quiz_set.questions[i];
-
+        let mut answers_by_index = vec![vec![]; quiz_set.questions.len()];
+        
+        for answer_option in &params.answers {
+            // 查找对应的题目
+            let question = question_map
+                .get(&answer_option.question_id)
+                .expect(&format!("Question not found: {}", answer_option.question_id));
+            
+            // 查找题目在原数组中的索引，用于保持原有存储结构
+            let question_index = quiz_set.questions
+                .iter()
+                .position(|q| q.id == answer_option.question_id)
+                .expect(&format!("Question index not found: {}", answer_option.question_id));
+            
+            // 存储答案到对应索引位置
+            answers_by_index[question_index] = answer_option.selected_answers.clone();
+            
             // 检查用户选择的答案是否与所有正确选项完全匹配（顺序无关）
-            let mut user_answers_sorted = user_answers.clone();
+            let mut user_answers_sorted = answer_option.selected_answers.clone();
             user_answers_sorted.sort();
             let mut correct_options_sorted = question.correct_options.clone();
             correct_options_sorted.sort();
@@ -210,7 +244,7 @@ impl QuizContract {
         let attempt = UserAttempt {
             quiz_id,
             user: user.clone(),
-            answers: params.answers,
+            answers: answers_by_index,
             score,
             time_taken: params.time_taken,
             completed_at: now,

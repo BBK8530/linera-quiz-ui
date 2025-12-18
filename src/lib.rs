@@ -32,13 +32,23 @@ pub struct QuestionParams {
     pub options: Vec<String>,
     pub correct_options: Vec<u32>,
     pub points: u32,
+    #[serde(rename = "type")]
+    pub question_type: String,
+    pub id: String,
+}
+
+/// 答案选项结构体，包含题目ID和对应的答案
+#[derive(Debug, Serialize, Deserialize, InputObject)]
+pub struct AnswerOption {
+    pub question_id: String,
+    pub selected_answers: Vec<u32>, // 答案选项索引列表，支持多选
 }
 
 /// 提交答案的参数
 #[derive(Debug, Serialize, Deserialize, InputObject)]
 pub struct SubmitAnswersParams {
     pub quiz_id: u64,
-    pub answers: Vec<Vec<u32>>, // 每个问题的答案选项索引列表，支持多选
+    pub answers: Vec<AnswerOption>, // 每个问题的答案选项索引列表，支持多选
     pub time_taken: u64,        // 毫秒
     pub nick_name: String,
 }
@@ -115,10 +125,12 @@ pub struct QuizSetView {
 /// 问题视图
 #[derive(Debug, Serialize, Deserialize, SimpleObject)]
 pub struct QuestionView {
-    pub id: u32,
+    pub id: String,
     pub text: String,
     pub options: Vec<String>,
     pub points: u32,
+    #[serde(rename = "type")]
+    pub question_type: String,
 }
 
 /// 查询响应

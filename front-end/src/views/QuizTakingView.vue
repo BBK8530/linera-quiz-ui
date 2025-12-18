@@ -156,23 +156,33 @@
                   @click="selectAnswer(index)"
                 >
                   <v-card
-                    :elevation="selectedAnswer === index ? 4 : 0"
+                    :elevation="selectedAnswers.includes(index) ? 4 : 0"
                     variant="outlined"
                     rounded="xl"
                     class="p-5 hover:bg-primary/5 hover:border-primary/30 transition-all duration-300 transform hover:-translate-y-1"
                     :class="{
-                      'bg-primary/5 border-primary': selectedAnswer === index,
+                      'bg-primary/5 border-primary': selectedAnswers.includes(index),
                     }"
                   >
                     <div class="flex items-center">
                       <v-radio
-                        v-model="selectedAnswer"
+                        v-if="currentQuestion.type === 'radio'"
+                        v-model="selectedAnswers"
                         :value="index"
                         hide-details
                         density="compact"
                         color="primary"
                         class="mr-4"
                       ></v-radio>
+                      <v-checkbox
+                        v-else
+                        v-model="selectedAnswers"
+                        :value="index"
+                        hide-details
+                        density="compact"
+                        color="primary"
+                        class="mr-4"
+                      ></v-checkbox>
                       <span class="text-gray-800 text-lg">{{ option }}</span>
                     </div>
                   </v-card>
@@ -186,13 +196,13 @@
             class="px-8 py-6 bg-gray-50 border-t border-gray-100 justify-end"
           >
             <v-btn
-              @click="nextQuestion"
-              :disabled="selectedAnswer === null"
-              color="primary"
-              variant="elevated"
-              size="large"
-              :elevation="selectedAnswer !== null ? 4 : 0"
-            >
+          @click="nextQuestion"
+          :disabled="selectedAnswers.length === 0"
+          color="primary"
+          variant="elevated"
+          size="large"
+          :elevation="selectedAnswers.length > 0 ? 4 : 0"
+        >
               {{
                 currentQuestionIndex === quiz.questions.length - 1
                   ? "Submit quiz"
@@ -224,7 +234,7 @@ const quizId = parseInt(route.params.quizId as string, 10);
 const loading = ref(true);
 const errorMessage = ref("");
 const currentQuestionIndex = ref(0);
-const selectedAnswer = ref<number | null>(null);
+const selectedAnswers = ref<number[]>([]);
 const currentQuestionTime = ref(0);
 const questionTimer = ref<NodeJS.Timeout | null>(null);
 const totalTimeTaken = ref(0); // 记录整个测验的总用时（秒）
@@ -249,8 +259,21 @@ const {
 
 // 计算属性
 const quiz = computed(() => quizData.value?.quizSet || null);
+
+// 随机排序题目
+const shuffledQuestions = computed(() => {
+  if (!quiz.value?.questions) return [];
+  const questions = [...quiz.value.questions];
+  // Fisher-Yates 洗牌算法
+  for (let i = questions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [questions[i], questions[j]] = [questions[j], questions[i]];
+  }
+  return questions;
+});
+
 const currentQuestion = computed(() => {
-  return quiz.value?.questions[currentQuestionIndex.value];
+  return shuffledQuestions.value[currentQuestionIndex.value];
 });
 
 // 格式化时间为 MM:SS
@@ -262,10 +285,10 @@ const formatTime = (seconds: number): string => {
     .padStart(2, "0")}`;
 };
 
-// 格式化日期时间
+// Format date and time
 const formatDateTime = (timestampMs: string | number): string => {
   const date = new Date(parseInt(timestampMs as string));
-  return date.toLocaleString("zh-CN", {
+  return date.toLocaleString("en-US", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -285,11 +308,11 @@ const checkQuizTimeStatus = () => {
 
   if (now < startTime) {
     timeStatus.value = "not_started";
-    timeStatusMessage.value = `测验将在 ${formatDateTime(startTime)} 开始`;
+    timeStatusMessage.value = `Quiz will start at ${formatDateTime(startTime)}`;
     return false;
   } else if (now > endTime) {
     timeStatus.value = "ended";
-    timeStatusMessage.value = `测验已结束，结束时间为 ${formatDateTime(
+    timeStatusMessage.value = `Quiz has ended, end time is ${formatDateTime(
       quiz.value.endTime
     )}`;
     return false;
@@ -326,24 +349,34 @@ const copyQuizLink = () => {
 
 // 选择答案
 const selectAnswer = (index: number) => {
-  selectedAnswer.value = index;
+  if (currentQuestion.value?.type === 'radio') {
+    // 单选：替换当前选择
+    selectedAnswers.value = [index];
+  } else {
+    // 多选：切换选择状态
+    if (selectedAnswers.value.includes(index)) {
+      selectedAnswers.value = selectedAnswers.value.filter(i => i !== index);
+    } else {
+      selectedAnswers.value.push(index);
+    }
+  }
 };
 
 // 下一题
 const nextQuestion = () => {
-  if (selectedAnswer.value === null) return;
+  if (selectedAnswers.value.length === 0) return;
 
   // 记录当前题目的答题时间和答案
   if (currentQuestion.value) {
     answers.value.push({
       questionId: currentQuestion.value.id,
-      selectedAnswers: [selectedAnswer.value],
+      selectedAnswers: [...selectedAnswers.value],
       timeTaken: currentQuestionTime.value,
     });
   }
 
   // 重置当前题目的状态
-  selectedAnswer.value = null;
+  selectedAnswers.value = [];
   currentQuestionTime.value = 0;
 
   // 如果是最后一题，提交答案
@@ -365,10 +398,10 @@ const submitQuiz = async () => {
 
   try {
     // 记录最后一题的答题时间和答案
-    if (currentQuestion.value && selectedAnswer.value !== null) {
+    if (currentQuestion.value && selectedAnswers.value.length > 0) {
       answers.value.push({
         questionId: currentQuestion.value.id,
-        selectedAnswers: [selectedAnswer.value],
+        selectedAnswers: [...selectedAnswers.value],
         timeTaken: currentQuestionTime.value,
       });
     }
@@ -384,7 +417,10 @@ const submitQuiz = async () => {
     // 构建符合合约要求的提交参数
     const params = {
       quizId: quizId, // 使用 snake_case 与合约匹配
-      answers: answers.value.map((item) => item.selectedAnswers), // 只传递答案数组
+      answers: answers.value.map((item) => ({
+        questionId: item.questionId,
+        selectedAnswers: item.selectedAnswers
+      })), // 传递题目ID和答案
       timeTaken: totalTimeTaken.value * 1000, // 转换为毫秒
       nickName: authStore.currentUser.username || "QuizTaker",
     };
@@ -395,7 +431,7 @@ const submitQuiz = async () => {
     // 跳转到排名页面
     router.push(`/quiz-rank/${quizId}`);
   } catch (err) {
-    errorMessage.value = "提交失败，请稍后重试";
+    errorMessage.value = "Submission failed, please try again later";
     console.error("Quiz submission error:", err);
   }
 };
@@ -416,24 +452,27 @@ const initQuizData = async () => {
     await refetch();
 
     if (!quiz.value || quiz.value.questions.length === 0) {
-      errorMessage.value = "问卷不存在或内容为空";
+      errorMessage.value = "Quiz does not exist or is empty";
       return;
     }
   } catch (err) {
-    errorMessage.value = "加载问卷失败，请稍后重试";
+    errorMessage.value = "Failed to load quiz, please try again later";
     console.error("Error loading quiz:", err);
   } finally {
     loading.value = false;
   }
 };
 
-// 监听当前题目变化，重置计时器
+// 监听当前题目变化，重置计时器和选中状态
 watch(
   currentQuestionIndex,
   () => {
     if (questionTimer.value) {
       clearInterval(questionTimer.value);
     }
+
+    // 重置选中答案
+    selectedAnswers.value = [];
 
     // 启动新的计时器
     questionTimer.value = setInterval(() => {
@@ -477,8 +516,8 @@ onMounted(() => {
   watch(error, () => {
     if (error.value) {
       loading.value = false;
-      errorMessage.value = "无法加载测验数据，请稍后重试";
-      console.error("加载测验失败:", error.value);
+      errorMessage.value = "Failed to load quiz data, please try again later";
+      console.error("Failed to load quiz:", error.value);
     }
   });
 });
@@ -495,7 +534,7 @@ watch([loading, error], () => {
   if (loading.value === false) {
     if (error.value) {
       errorMessage.value =
-        "加载问卷失败: " + (error.value?.message || "未知错误");
+        "Failed to load quiz: " + (error.value?.message || "unknown error");
     }
   }
 });

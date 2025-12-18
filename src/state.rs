@@ -10,11 +10,13 @@ use serde::{Deserialize, Serialize};
 /// 问题结构
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Question {
-    pub id: u32,
+    pub id: String,
     pub text: String,
     pub options: Vec<String>,
     pub correct_options: Vec<u32>,
     pub points: u32,
+    #[serde(rename = "type")]
+    pub question_type: String,
 }
 
 /// Quiz集合结构

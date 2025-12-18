@@ -46,7 +46,7 @@ const connectWallet = async () => {
     walletContext.walletType.value = "in-memory";
     walletContext.isConnected.value = true;
 
-    console.log("随机生成钱包:", formattedAccount);
+    console.log("Randomly generated wallet:", formattedAccount);
 
     console.log(
       `Wallet connected: in-memory, Account: ${walletContext.account.value}`

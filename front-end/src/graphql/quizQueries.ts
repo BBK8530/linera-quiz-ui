@@ -16,6 +16,7 @@ export const GET_ALL_QUIZ_SETS = gql`
         text
         options
         points
+        type
       }
     }
   }
@@ -37,6 +38,7 @@ export const GET_QUIZ_SET = gql`
         text
         options
         points
+        type
       }
     }
   }
@@ -109,6 +111,7 @@ export const GET_USER_CREATED_QUIZZES = gql`
         text
         options
         points
+        type
       }
     }
   }
@@ -130,6 +133,7 @@ export const GET_USER_PARTICIPATED_QUIZZES = gql`
         text
         options
         points
+        type
       }
     }
   }
