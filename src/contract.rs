@@ -14,8 +14,7 @@ use linera_sdk::{
 
 use crate::state::{Question, QuizSet, QuizState, UserAttempt};
 use quiz::{CreateQuizParams, LeaderboardEntry, Operation, SubmitAnswersParams};
-use rand::distributions::Alphanumeric;
-use rand::prelude::*;
+
 
 pub struct QuizContract {
     state: QuizState,
@@ -132,13 +131,10 @@ impl QuizContract {
             questions: params
                 .questions
                 .into_iter()
-                .map(|q| {
-                    // 生成随机ID（16位字母数字字符串）
-                    let id: String = rand::thread_rng()
-                        .sample_iter(&Alphanumeric)
-                        .take(16)
-                        .map(char::from)
-                        .collect();
+                .enumerate()
+                .map(|(index, q)| {
+                    // 使用测验ID和题目索引生成唯一ID
+                    let id = format!("q{}-{}", quiz_id, index);
                     
                     // 根据正确答案的个数设置type
                     let question_type = if q.correct_options.len() > 1 { "checkbox" } else { "radio" };
