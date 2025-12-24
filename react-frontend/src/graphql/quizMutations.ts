@@ -1,19 +1,14 @@
 import { gql } from '@apollo/client';
 
 export const SET_NICKNAME = gql`
-  mutation SetNickname($nickname: String!) {
-    set_nickname(params: { nickname: $nickname }) {
-      success
-    }
+  mutation SetNickname($field0: SetNicknameParams!) {
+    setNickname(field0: $field0)
   }
 `;
 
 export const CREATE_QUIZ = gql`
-  mutation CreateQuiz($title: String!, $description: String!, $duration: Int!, $questions: [CreateQuestionInput!]!) {
-    create_quiz(params: { title: $title, description: $description, duration: $duration, questions: $questions }) {
-      success
-      quiz_id
-    }
+  mutation CreateQuiz($field0: CreateQuizParams!) {
+    createQuiz(field0: $field0)
   }
 `;
 

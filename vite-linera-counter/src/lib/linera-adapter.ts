@@ -1,12 +1,13 @@
-import initLinera, {
+import {
+  initialize as initLinera,
   Faucet,
   Client,
   Wallet,
   Application,
-} from "@linera/client";
-import type { Wallet as DynamicWallet } from "@dynamic-labs/sdk-react-core";
-import { DynamicSigner } from "./dynamic-signer";
-import { LINERA_RPC_URL, COUNTER_APP_ID } from "../constants";
+} from '@linera/client';
+import type { Wallet as DynamicWallet } from '@dynamic-labs/sdk-react-core';
+import { DynamicSigner } from './dynamic-signer';
+import { LINERA_RPC_URL, COUNTER_APP_ID } from '../constants';
 
 export interface LineraProvider {
   client: Client;
@@ -33,29 +34,29 @@ export class LineraAdapter {
 
   async connect(
     dynamicWallet: DynamicWallet,
-    rpcUrl?: string
+    rpcUrl?: string,
   ): Promise<LineraProvider> {
     if (this.provider) return this.provider;
     if (this.connectPromise) return this.connectPromise;
 
     if (!dynamicWallet) {
-      throw new Error("Dynamic wallet is required for Linera connection");
+      throw new Error('Dynamic wallet is required for Linera connection');
     }
 
     try {
       this.connectPromise = (async () => {
         const { address } = dynamicWallet;
-        console.log("🔗 Connecting with Dynamic wallet:", address);
+        console.log('🔗 Connecting with Dynamic wallet:', address);
 
         try {
           if (!this.wasmInitPromise) this.wasmInitPromise = initLinera();
           await this.wasmInitPromise;
-          console.log("✅ Linera WASM modules initialized successfully");
+          console.log('✅ Linera WASM modules initialized successfully');
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
-          if (msg.includes("storage is already initialized")) {
+          if (msg.includes('storage is already initialized')) {
             console.warn(
-              "⚠️ Linera storage already initialized; continuing without re-init"
+              '⚠️ Linera storage already initialized; continuing without re-init',
             );
           } else {
             throw e;
@@ -68,7 +69,7 @@ export class LineraAdapter {
 
         const signer = await new DynamicSigner(dynamicWallet);
         const client = await new Client(wallet, signer);
-        console.log("✅ Linera wallet created successfully!");
+        console.log('✅ Linera wallet created successfully!');
 
         this.provider = {
           client,
@@ -77,7 +78,7 @@ export class LineraAdapter {
           chainId,
           address: dynamicWallet.address,
         };
-        console.log("🔄 Notifying connection state change (chain connected)");
+        console.log('🔄 Notifying connection state change (chain connected)');
         this.onConnectionChange?.();
         return this.provider;
       })();
@@ -85,11 +86,11 @@ export class LineraAdapter {
       const provider = await this.connectPromise;
       return provider;
     } catch (error) {
-      console.error("Failed to connect to Linera:", error);
+      console.error('Failed to connect to Linera:', error);
       throw new Error(
         `Failed to connect to Linera network: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       );
     } finally {
       this.connectPromise = null;
@@ -97,46 +98,46 @@ export class LineraAdapter {
   }
 
   async setApplication(appId?: string) {
-    if (!this.provider) throw new Error("Not connected to Linera");
+    if (!this.provider) throw new Error('Not connected to Linera');
 
-    const application = await this.provider.client
-      .frontend()
-      .application(appId || COUNTER_APP_ID);
+    const application = await this.provider.client.application(
+      appId || COUNTER_APP_ID,
+    );
 
-    if (!application) throw new Error("Failed to get application");
-    console.log("✅ Linera application set successfully!");
+    if (!application) throw new Error('Failed to get application');
+    console.log('✅ Linera application set successfully!');
     this.application = application;
-    console.log("🔄 Notifying connection state change (app set)");
+    console.log('🔄 Notifying connection state change (app set)');
     this.onConnectionChange?.();
   }
 
   async queryApplication<T>(query: object): Promise<T> {
-    if (!this.application) throw new Error("Application not set");
+    if (!this.application) throw new Error('Application not set');
 
     const result = await this.application.query(JSON.stringify(query));
     const response = JSON.parse(result);
 
-    console.log("✅ Linera application queried successfully!");
+    console.log('✅ Linera application queried successfully!');
     return response as T;
   }
 
   getProvider(): LineraProvider {
-    if (!this.provider) throw new Error("Provider not set");
+    if (!this.provider) throw new Error('Provider not set');
     return this.provider;
   }
 
   getFaucet(): Faucet {
-    if (!this.provider?.faucet) throw new Error("Faucet not set");
+    if (!this.provider?.faucet) throw new Error('Faucet not set');
     return this.provider.faucet;
   }
 
   getWallet(): Wallet {
-    if (!this.provider?.wallet) throw new Error("Wallet not set");
+    if (!this.provider?.wallet) throw new Error('Wallet not set');
     return this.provider.wallet;
   }
 
   getApplication(): Application {
-    if (!this.application) throw new Error("Application not set");
+    if (!this.application) throw new Error('Application not set');
     return this.application;
   }
 

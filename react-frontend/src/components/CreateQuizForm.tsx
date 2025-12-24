@@ -1,43 +1,37 @@
 import React, { useState } from 'react';
-import { useMutation } from '@apollo/client/react';
-import { CREATE_QUIZ } from '../graphql/quizMutations';
-import { useDynamicContext } from '@dynamic-labs/sdk-react';
-import { useDynamicSigner } from '../providers/DynamicSigner';
+import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { lineraAdapter } from '../providers/LineraAdapter';
+import useNotification from '../hooks/useNotification';
 
 interface Question {
-  question_text: string;
+  text: string;
   options: string[];
-  correct_answer: string;
+  correctOptions: number[];
+  points: number;
+  questionType: 'single' | 'multiple';
 }
 
 const CreateQuizForm: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [duration, setDuration] = useState<number>(15);
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [timeLimit, setTimeLimit] = useState<number>(300); // Default 5 minutes
   const [questions, setQuestions] = useState<Question[]>([
-    { question_text: '', options: ['', '', '', ''], correct_answer: '' }
+    {
+      text: '',
+      options: ['', '', '', ''],
+      correctOptions: [],
+      points: 10,
+      questionType: 'single'
+    }
   ]);
   
   const { user, primaryWallet } = useDynamicContext();
-  const { signer } = useDynamicSigner();
-  
-  const [createQuiz, { loading }] = useMutation(CREATE_QUIZ, {
-    onCompleted: (data) => {
-      alert(`测验创建成功！测验ID: ${data.create_quiz.quiz_id}`);
-      // 重置表单
-      setTitle('');
-      setDescription('');
-      setDuration(15);
-      setQuestions([{ question_text: '', options: ['', '', '', ''], correct_answer: '' }]);
-    },
-    onError: (err) => {
-      console.error('创建测验失败:', err);
-      alert(`创建测验失败: ${err.message}`);
-    },
-  });
+  const [loading, setLoading] = useState(false);
+  const { success, error } = useNotification();
 
-  const handleQuestionChange = (index: number, field: keyof Question, value: string | string[]) => {
+  const handleQuestionChange = (index: number, field: keyof Question, value: string | number | number[] | 'single' | 'multiple') => {
     const updatedQuestions = [...questions];
     updatedQuestions[index] = { ...updatedQuestions[index], [field]: value };
     setQuestions(updatedQuestions);
@@ -49,8 +43,35 @@ const CreateQuizForm: React.FC = () => {
     setQuestions(updatedQuestions);
   };
 
+  const addOption = (questionIndex: number) => {
+    const updatedQuestions = [...questions];
+    updatedQuestions[questionIndex].options.push('');
+    setQuestions(updatedQuestions);
+  };
+
+  const removeOption = (questionIndex: number, optionIndex: number) => {
+    const updatedQuestions = [...questions];
+    if (updatedQuestions[questionIndex].options.length <= 1) return;
+    
+    // Remove the option
+    updatedQuestions[questionIndex].options.splice(optionIndex, 1);
+    
+    // Update correctOptions indices
+    updatedQuestions[questionIndex].correctOptions = updatedQuestions[questionIndex].correctOptions
+      .filter(idx => idx !== optionIndex)
+      .map(idx => idx > optionIndex ? idx - 1 : idx);
+    
+    setQuestions(updatedQuestions);
+  };
+
   const addQuestion = () => {
-    setQuestions([...questions, { question_text: '', options: ['', '', '', ''], correct_answer: '' }]);
+    setQuestions([...questions, {
+      text: '',
+      options: ['', '', '', ''],
+      correctOptions: [],
+      points: 10,
+      questionType: 'single'
+    }]);
   };
 
   const removeQuestion = (index: number) => {
@@ -60,65 +81,147 @@ const CreateQuizForm: React.FC = () => {
     }
   };
 
+  const handleCorrectOptionChange = (questionIndex: number, optionIndex: number, isChecked: boolean) => {
+    const updatedQuestions = [...questions];
+    const question = updatedQuestions[questionIndex];
+    
+    if (question.questionType === 'single') {
+      // For single choice, only one correct answer
+      updatedQuestions[questionIndex].correctOptions = isChecked ? [optionIndex] : [];
+    } else {
+      // For multiple choice, toggle the option
+      if (isChecked) {
+        // Add if not already present
+        if (!question.correctOptions.includes(optionIndex)) {
+          updatedQuestions[questionIndex].correctOptions.push(optionIndex);
+        }
+      } else {
+        // Remove if present
+        updatedQuestions[questionIndex].correctOptions = question.correctOptions.filter(idx => idx !== optionIndex);
+      }
+    }
+    
+    setQuestions(updatedQuestions);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!title.trim() || !description.trim()) {
-      alert('标题和描述不能为空');
+      error('标题和描述不能为空');
       return;
     }
 
-    if (duration <= 0) {
-      alert('时长必须大于0');
+    if (!startTime || !endTime) {
+      error('请选择测验开始和结束时间');
+      return;
+    }
+
+    // Validate time range
+    const startDate = new Date(startTime);
+    const endDate = new Date(endTime);
+    const now = new Date();
+
+    if (startDate <= now) {
+      error('开始时间必须是未来时间');
+      return;
+    }
+
+    if (endDate <= startDate) {
+      error('结束时间必须晚于开始时间');
+      return;
+    }
+
+    if (timeLimit <= 0) {
+      error('时间限制必须大于0秒');
       return;
     }
 
     // 检查所有问题是否都填写完整
     for (let i = 0; i < questions.length; i++) {
       const question = questions[i];
-      if (!question.question_text.trim()) {
-        alert(`第${i + 1}题的问题文本不能为空`);
+      if (!question.text.trim()) {
+        error(`第${i + 1}题的问题文本不能为空`);
         return;
       }
 
       for (let j = 0; j < question.options.length; j++) {
         if (!question.options[j].trim()) {
-          alert(`第${i + 1}题的第${j + 1}个选项不能为空`);
+          error(`第${i + 1}题的第${j + 1}个选项不能为空`);
           return;
         }
       }
 
-      if (!question.correct_answer) {
-        alert(`请为第${i + 1}题选择正确答案`);
+      if (question.correctOptions.length === 0) {
+        error(`请为第${i + 1}题选择正确答案`);
         return;
       }
     }
 
     if (!user || !primaryWallet) {
-      alert('请先登录');
-      return;
-    }
-
-    if (!signer) {
-      alert('无法获取签名者');
+      error('请先登录');
       return;
     }
 
     try {
-      lineraAdapter.setSigner(signer);
+      setLoading(true);
+      // Connect to Linera with the primary wallet
+      if (!primaryWallet) {
+        error('无法获取钱包');
+        return;
+      }
+      await lineraAdapter.connect(primaryWallet);
       
-      await createQuiz({
-        variables: {
-          title: title.trim(),
-          description: description.trim(),
-          duration,
-          questions,
-        },
+      // Set the application if not already set
+      if (!lineraAdapter.isApplicationSet()) {
+        await lineraAdapter.setApplication();
+      }
+      
+      // Convert time to millisecond timestamp string
+      const startTimestamp = startDate.getTime().toString();
+      const endTimestamp = endDate.getTime().toString();
+
+      // Format questions for submission
+      const formattedQuestions = questions.map((q, index) => ({
+        text: q.text,
+        options: q.options,
+        correctOptions: q.correctOptions,
+        points: q.points,
+        questionType: q.questionType,
+        id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`
+      }));
+
+      // Use Linera SDK for mutation
+      await lineraAdapter.queryApplication({
+        query: `mutation {
+          createQuiz(
+            field0: {
+              title: "${title.trim()}",
+              description: "${description.trim()}",
+              startTime: "${startTimestamp}",
+              endTime: "${endTimestamp}",
+              timeLimit: ${timeLimit},
+              questions: ${JSON.stringify(formattedQuestions).replace(/"([^"]+)":/g, '$1:')},
+              nickname: "${user.username || 'QuizCreator'}"
+            }
+          )
+        }`
       });
+      
+      success('测验创建成功！');
+      // 重置表单
+      setTitle('');
+      setDescription('');
+      setStartTime('');
+      setEndTime('');
+      setTimeLimit(300);
+      setQuestions([{ text: '', options: ['', '', '', ''], correctOptions: [], points: 10, questionType: 'single' }]);
     } catch (err: unknown) {
       console.error('创建测验失败:', err);
       const errorMessage = err instanceof Error ? err.message : '未知错误';
-      alert(`创建测验失败: ${errorMessage}`);
+      error(`创建测验失败: ${errorMessage}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -145,6 +248,7 @@ const CreateQuizForm: React.FC = () => {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="输入测验标题"
             required
+            className={loading ? 'loading-input' : ''}
           />
         </div>
 
@@ -157,19 +261,47 @@ const CreateQuizForm: React.FC = () => {
             placeholder="输入测验描述"
             required
             rows={4}
+            className={loading ? 'loading-input' : ''}
           />
         </div>
 
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="startTime">开始时间</label>
+            <input
+              type="datetime-local"
+              id="startTime"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              required
+              className={loading ? 'loading-input' : ''}
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="endTime">结束时间</label>
+            <input
+              type="datetime-local"
+              id="endTime"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              required
+              className={loading ? 'loading-input' : ''}
+            />
+          </div>
+        </div>
+
         <div className="form-group">
-          <label htmlFor="duration">测验时长（分钟）</label>
+          <label htmlFor="timeLimit">时间限制（秒）</label>
           <input
             type="number"
-            id="duration"
-            value={duration}
-            onChange={(e) => setDuration(parseInt(e.target.value))}
+            id="timeLimit"
+            value={timeLimit}
+            onChange={(e) => setTimeLimit(parseInt(e.target.value))}
             min="1"
-            max="120"
+            max="3600"
             required
+            className={loading ? 'loading-input' : ''}
           />
         </div>
 
@@ -193,10 +325,55 @@ const CreateQuizForm: React.FC = () => {
               <input
                 type="text"
                 id={`question-${index}`}
-                value={question.question_text}
-                onChange={(e) => handleQuestionChange(index, 'question_text', e.target.value)}
+                value={question.text}
+                onChange={(e) => handleQuestionChange(index, 'text', e.target.value)}
                 placeholder="输入问题文本"
                 required
+                className={loading ? 'loading-input' : ''}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor={`question-type-${index}`}>问题类型</label>
+              <div className="question-type-options">
+                <label>
+                  <input
+                    type="radio"
+                    name={`question-type-${index}`}
+                    value="single"
+                    checked={question.questionType === 'single'}
+                    onChange={() => handleQuestionChange(index, 'questionType', 'single')}
+                    disabled={loading}
+                  />
+                  单选题
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name={`question-type-${index}`}
+                    value="multiple"
+                    checked={question.questionType === 'multiple'}
+                    onChange={() => handleQuestionChange(index, 'questionType', 'multiple')}
+                    disabled={loading}
+                  />
+                  多选题
+                </label>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor={`points-${index}`}>分值</label>
+              <input
+                type="number"
+                id={`points-${index}`}
+                value={question.points}
+                onChange={(e) => handleQuestionChange(index, 'points', parseInt(e.target.value))}
+                min="1"
+                max="100"
+                required
+                className={loading ? 'loading-input' : ''}
+                disabled={loading}
               />
             </div>
 
@@ -204,32 +381,64 @@ const CreateQuizForm: React.FC = () => {
               <label>选项</label>
               {question.options.map((option, optionIndex) => (
                 <div key={optionIndex} className="option-item">
-                  <input
-                    type="radio"
-                    id={`option-${index}-${optionIndex}`}
-                    name={`correct-option-${index}`}
-                    value={String.fromCharCode(65 + optionIndex)}
-                    checked={question.correct_answer === String.fromCharCode(65 + optionIndex)}
-                    onChange={(e) => handleQuestionChange(index, 'correct_answer', e.target.value)}
-                    required
-                  />
-                  <label htmlFor={`option-${index}-${optionIndex}`}>
-                    {String.fromCharCode(65 + optionIndex)}. 
-                  </label>
-                  <input
-                    type="text"
-                    value={option}
-                    onChange={(e) => handleOptionChange(index, optionIndex, e.target.value)}
-                    placeholder={`选项 ${String.fromCharCode(65 + optionIndex)}`}
-                    required
-                  />
+                  <div className="option-control">
+                    {question.questionType === 'single' ? (
+                      <input
+                        type="radio"
+                        id={`option-${index}-${optionIndex}`}
+                        name={`correct-option-${index}`}
+                        checked={question.correctOptions.includes(optionIndex)}
+                        onChange={(e) => handleCorrectOptionChange(index, optionIndex, e.target.checked)}
+                        required
+                        disabled={loading}
+                      />
+                    ) : (
+                      <input
+                        type="checkbox"
+                        id={`option-${index}-${optionIndex}`}
+                        checked={question.correctOptions.includes(optionIndex)}
+                        onChange={(e) => handleCorrectOptionChange(index, optionIndex, e.target.checked)}
+                        disabled={loading}
+                      />
+                    )}
+                    <label htmlFor={`option-${index}-${optionIndex}`}>
+                      {String.fromCharCode(65 + optionIndex)}. 
+                    </label>
+                  </div>
+                  <div className="option-input">
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(e) => handleOptionChange(index, optionIndex, e.target.value)}
+                      placeholder={`选项 ${String.fromCharCode(65 + optionIndex)}`}
+                      required
+                      className={loading ? 'loading-input' : ''}
+                      disabled={loading}
+                    />
+                    <button
+                      type="button"
+                      className="remove-option"
+                      onClick={() => removeOption(index, optionIndex)}
+                      disabled={question.options.length <= 1 || loading}
+                    >
+                      删除
+                    </button>
+                  </div>
                 </div>
               ))}
+              <button
+                type="button"
+                className="add-option"
+                onClick={() => addOption(index)}
+                disabled={loading}
+              >
+                添加选项
+              </button>
             </div>
           </div>
         ))}
 
-        <button type="button" className="add-question" onClick={addQuestion}>
+        <button type="button" className="add-question" onClick={addQuestion} disabled={loading}>
           添加问题
         </button>
 

@@ -11,6 +11,13 @@ export const GET_QUIZZES = gql`
       is_started
       is_ended
       registered_count
+      questions {
+        id
+        text
+        options
+        correct_answer
+      }
+      created_at
     }
   }
 `;
@@ -28,7 +35,7 @@ export const GET_QUIZ = gql`
       registered_count
       questions {
         id
-        question_text
+        text
         options
         correct_answer
       }
@@ -37,12 +44,11 @@ export const GET_QUIZ = gql`
 `;
 
 export const GET_USER = gql`
-  query GetUser {
-    user {
+  query GetUser($walletAddress: String!) {
+    user(walletAddress: $walletAddress) {
       nickname
-      wallet_address
-      quizzes_taken
-      total_score
+      walletAddress
+      createdAt
     }
   }
 `;
