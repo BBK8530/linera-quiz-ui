@@ -13,7 +13,7 @@
     "@apollo/client": "^4.0.11",
     "@dynamic-labs/ethereum": "^4.52.1",
     "@dynamic-labs/sdk-react-core": "^4.52.1",
-    "@linera/client": "^0.15.8",
+    "@linera/client": "0.15.7",
     "graphql": "^16.12.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

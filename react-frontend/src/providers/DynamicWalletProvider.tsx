@@ -13,13 +13,8 @@ export const DynamicWalletProvider: React.FC<DynamicWalletProviderProps> = ({ ch
       settings={{
         environmentId: "08f301cc-9979-4291-ae59-468ecd3f4825", // 需要从Dynamic控制台获取
         walletConnectors: [EthereumWalletConnectors],
-        theme: {
-          fontFamily: 'Inter, sans-serif',
-        },
-        showAuthFlow: false,
       }}
     >
-      <DynamicWidget />
       {children}
     </DynamicContextProvider>
   );
