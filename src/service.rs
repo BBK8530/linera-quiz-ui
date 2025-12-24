@@ -335,30 +335,6 @@ impl QueryRoot {
         }
     }
 
-    // 获取所有已设置昵称的用户
-    async fn all_users(&self) -> Vec<UserView> {
-        let mut users = Vec::new();
-
-        let _ = self
-            .state
-            .users
-            .for_each_index_value(|_key, user| {
-                let user = user.into_owned();
-                // 只返回已设置昵称的用户
-                if !user.nickname.is_empty() {
-                    users.push(UserView {
-                        wallet_address: user.wallet_address.clone(),
-                        nickname: user.nickname.clone(),
-                        created_at: user.created_at.micros().to_string(),
-                    });
-                }
-                Ok(())
-            })
-            .await;
-
-        users
-    }
-
     async fn get_quiz_participants(&self, quiz_id: u64) -> Vec<String> {
         match self.state.quiz_participants.get(&quiz_id).await {
             Ok(Some(participants)) => participants,

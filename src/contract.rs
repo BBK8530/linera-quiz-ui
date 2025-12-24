@@ -11,6 +11,7 @@ use linera_sdk::{
     views::{RootView, View},
     Contract, ContractRuntime,
 };
+use log::{debug, error, info};
 
 use crate::state::{Question, QuizMode, QuizSet, QuizStartMode, QuizState, User, UserAttempt};
 use quiz::{CreateQuizParams, LeaderboardEntry, Operation, SetNicknameParams, SubmitAnswersParams};
@@ -75,32 +76,67 @@ impl QuizContract {
             .ok_or(quiz::QuizError::InsufficientPermissions)?
             .to_string();
 
+        // 添加日志记录
+        info!(
+            "set_nickname called with parameters: nickname={}, wallet_address={}",
+            params.nickname, wallet_address
+        );
+
         // 检查昵称是否已被使用
+        debug!(
+            "Checking if nickname '{}' is already taken",
+            params.nickname
+        );
         if self
             .state
             .nickname_to_wallet
             .get(&params.nickname)
             .await
-            .map_err(|_| quiz::QuizError::InternalError)?
+            .map_err(|_| {
+                error!(
+                    "Error checking nickname existence for '{}': database error",
+                    params.nickname
+                );
+                quiz::QuizError::InternalError
+            })?
             .is_some()
         {
+            debug!(
+                "Nickname '{}' is already taken, returning error",
+                params.nickname
+            );
             return Err(quiz::QuizError::NicknameAlreadyTaken);
         }
 
         // 检查用户是否已存在
-        if let Some(existing_user) = self
-            .state
-            .users
-            .get(&wallet_address)
-            .await
-            .map_err(|_| quiz::QuizError::InternalError)?
-        {
-            // 更新昵称
-            // 先删除旧昵称的映射
+        debug!(
+            "Checking if user with wallet_address '{}' already exists",
+            wallet_address
+        );
+        if let Some(existing_user) = self.state.users.get(&wallet_address).await.map_err(|_| {
+            error!(
+                "Error checking user existence for address '{}': database error",
+                wallet_address
+            );
+            quiz::QuizError::InternalError
+        })? {
+            debug!(
+                "User already exists, updating nickname from '{}' to '{}'",
+                existing_user.nickname, params.nickname
+            );
+            // 更新昵称，先删除旧昵称的映射
             self.state
                 .nickname_to_wallet
                 .remove(&existing_user.nickname)
-                .map_err(|_| quiz::QuizError::InternalError)?;
+                .map_err(|_| {
+                    error!(
+                        "Error removing old nickname mapping '{}' -> '{}': database error",
+                        existing_user.nickname, wallet_address
+                    );
+                    quiz::QuizError::InternalError
+                })?;
+        } else {
+            debug!("User does not exist yet, creating new user entry");
         }
 
         // 创建或更新用户
@@ -111,15 +147,41 @@ impl QuizContract {
         };
 
         // 存储用户信息
+        debug!(
+            "Storing user information for wallet_address '{}' with nickname '{}'",
+            wallet_address, params.nickname
+        );
         self.state
             .users
             .insert(&wallet_address, user)
-            .map_err(|_| quiz::QuizError::InternalError)?;
+            .map_err(|_| {
+                error!(
+                    "Error storing user information for address '{}': database error",
+                    wallet_address
+                );
+                quiz::QuizError::InternalError
+            })?;
+
         // 建立昵称到钱包地址的映射
+        debug!(
+            "Creating nickname mapping '{}' -> '{}'",
+            params.nickname, wallet_address
+        );
         self.state
             .nickname_to_wallet
-            .insert(&params.nickname, wallet_address)
-            .map_err(|_| quiz::QuizError::InternalError)?;
+            .insert(&params.nickname, wallet_address.clone())
+            .map_err(|_| {
+                error!(
+                    "Error creating nickname mapping '{}' -> '{}': database error",
+                    params.nickname, wallet_address
+                );
+                quiz::QuizError::InternalError
+            })?;
+
+        info!(
+            "Successfully set nickname '{}' for wallet_address '{}'",
+            params.nickname, wallet_address
+        );
         Ok(())
     }
 
