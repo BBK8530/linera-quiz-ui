@@ -11,7 +11,7 @@ export const DynamicWalletProvider: React.FC<DynamicWalletProviderProps> = ({ ch
     <DynamicContextProvider
       theme="auto"
       settings={{
-        environmentId: "08f301cc-9979-4291-ae59-468ecd3f4825", // 需要从Dynamic控制台获取
+        environmentId: "5d6f2905-e337-4b1b-bd35-308c00f6de7a", // 需要从Dynamic控制台获取
         walletConnectors: [EthereumWalletConnectors],
       }}
     >

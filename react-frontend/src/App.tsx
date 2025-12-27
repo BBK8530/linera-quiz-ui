@@ -9,7 +9,6 @@ import QuizTakingPage from './components/QuizTakingPage';
 import GlobalRankings from './components/GlobalRankings';
 import QuizRankings from './components/QuizRankings';
 import WalletConnectionScreen from './components/WalletConnectionScreen';
-import LoadingScreen from './components/LoadingScreen';
 import { BrowserRouter, Routes, Route, Link, Outlet } from 'react-router-dom';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import NotificationProvider from './components/NotificationContext';
@@ -50,19 +49,29 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { primaryWallet } = useDynamicContext();
-  const { isLineraConnected, isConnecting } = useConnection();
+  const { isLineraConnected, isConnecting, connectionError } = useConnection();
 
-  // 如果正在连接中，显示加载屏幕
-  if (isConnecting) {
-    return <LoadingScreen />;
-  }
-
-  // 如果钱包未连接或Linera未连接，显示钱包连接屏幕
-  if (!primaryWallet?.address || !isLineraConnected) {
+  // 如果钱包未连接，显示钱包连接屏幕
+  if (!primaryWallet?.address) {
     return <WalletConnectionScreen />;
   }
 
-  // 否则显示受保护的内容
+  // 如果正在连接Linera，显示加载屏幕
+  if (isConnecting) {
+    return <WalletConnectionScreen isLoading={true} loadingText="正在连接到 钱包 ..." />;
+  }
+
+  // 如果连接失败且未连接到Linera，显示连接错误
+  if (!isLineraConnected && connectionError) {
+    return (
+      <WalletConnectionScreen 
+        showError={true}
+        errorText={connectionError}
+      />
+    );
+  }
+
+  // 钱包已连接，显示受保护的内容（即使Linera连接可能还在后台处理）
   return <>{children}</>;
 };
 
@@ -147,7 +156,7 @@ function App() {
                       <ProtectedRoute>
                         <div className="content-wrapper">
                           <div className="content-header">
-                            <h2>All Quizzes</h2>
+                            <h2>Quizzes</h2>
                           </div>
                           <QuizList />
                         </div>

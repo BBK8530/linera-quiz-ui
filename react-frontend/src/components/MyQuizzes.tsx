@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useConnection } from '../contexts/ConnectionContext';
 import { useNavigate } from 'react-router-dom';
+import useNotification from '../hooks/useNotification';
 
 interface Question {
   id: string;
@@ -34,6 +35,7 @@ const MyQuizzes: React.FC = () => {
   const { connectToLinera, queryApplication, onNewBlock, offNewBlock } =
     useConnection();
   const navigate = useNavigate();
+  const { success, error } = useNotification();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [currentPage, setCurrentPage] = useState(1);
@@ -256,11 +258,11 @@ const MyQuizzes: React.FC = () => {
     navigator.clipboard
       .writeText(link)
       .then(() => {
-        alert('Quiz link copied to clipboard!');
+        success('Quiz link copied to clipboard!');
       })
       .catch(err => {
         console.error('Failed to copy link: ', err);
-        alert(`Failed to copy link. Please try again: ${link}`);
+        error(`Failed to copy link. Please try again: ${link}`);
       });
   };
 
@@ -340,11 +342,11 @@ const MyQuizzes: React.FC = () => {
             <div key={quiz.id} className="quiz-card">
               <h3>{quiz.title}</h3>
               <p className="quiz-description">{quiz.description}</p>
-              <div className="quiz-meta">
-                <span className="meta-item">
+              <div className="quiz-meta quiz-meta--list">
+                <span>
                   <strong>Questions:</strong> {quiz.questions.length}
                 </span>
-                <span className="meta-item">
+                <span>
                   <strong>Created at:</strong> {formatDate(quiz.createdAt)}
                 </span>
               </div>

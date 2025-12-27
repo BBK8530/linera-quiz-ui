@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useConnection } from '../contexts/ConnectionContext';
 import { useNavigate } from 'react-router-dom';
+import useNotification from '../hooks/useNotification';
 
 // 添加接口定义
 interface QuizSet {
@@ -12,7 +13,6 @@ interface QuizSet {
   startTime: string;
   endTime: string;
   mode: string;
-  isStarted: boolean;
   participantCount: number;
   questions: { id: string }[];
 }
@@ -119,7 +119,6 @@ const QuizList: React.FC = () => {
             startTime
             endTime
             mode
-            isStarted
             participantCount
             questions {
               id
@@ -148,9 +147,8 @@ const QuizList: React.FC = () => {
           if (result.data?.quizSets) {
             const quizSets = result.data.quizSets;
             setAllQuizzes(quizSets);
-          } else {
           }
-        } catch (err) {
+        } catch {
           // 静默处理错误，避免控制台噪音
         } finally {
           isQueryingRef.current = false;
@@ -237,16 +235,8 @@ const QuizList: React.FC = () => {
     }
   };
 
-  const copyQuizLink = (quizId: string) => {
-    const link = `${window.location.origin}/quiz/${quizId}`;
-    navigator.clipboard
-      .writeText(link)
-      .then(() => {
-        alert('测验链接已复制到剪贴板！');
-      })
-      .catch(err => {
-        alert(`复制链接失败，请重试: ${link}`);
-      });
+  const openQuizDetails = (quizId: string) => {
+    navigate(`/quiz/${quizId}`);
   };
 
   const handlePageChange = (page: number) => {
@@ -320,13 +310,22 @@ const QuizList: React.FC = () => {
         <div className="quiz-grid">
           {paginatedQuizzes.map((quiz: QuizSet) => (
             <div key={quiz.id} className="quiz-card">
-              <h3>{quiz.title}</h3>
+              <div className="quiz-card-header">
+                <h3>{quiz.title}</h3>
+                <button 
+                  className="copy-link-icon"
+                  onClick={() => openQuizDetails(quiz.id)}
+                  title="查看测验详情"
+                >
+                  📝
+                </button>
+              </div>
               <p className="quiz-description">{quiz.description}</p>
-              <div className="quiz-meta">
-                <span className="meta-item">
+              <div className="quiz-meta quiz-meta--list">
+                <span>
                   <strong>创建者:</strong> {quiz.creatorNickname}
                 </span>
-                <span className="meta-item">
+                <span>
                   <strong>模式:</strong> {quiz.mode}
                 </span>
                 <span className="meta-item">
@@ -343,34 +342,38 @@ const QuizList: React.FC = () => {
                 </span>
               </div>
               <div className="quiz-status">
-                {/* 根据 isStarted 和 endTime 判断状态 */}
+                {/* 根据 startTime 和 endTime 判断状态 */}
                 {new Date() > new Date(Number(quiz.endTime) / 1000) && (
                   <span className="status ended">已结束</span>
                 )}
-                {quiz.isStarted &&
+                {new Date() >= new Date(Number(quiz.startTime) / 1000) &&
                   new Date() <= new Date(Number(quiz.endTime) / 1000) && (
                     <span className="status started">进行中</span>
                   )}
-                {!quiz.isStarted &&
-                  new Date() <= new Date(Number(quiz.endTime) / 1000) && (
-                    <span className="status pending">待开始</span>
-                  )}
+                {new Date() < new Date(Number(quiz.startTime) / 1000) && (
+                  <span className="status pending">待开始</span>
+                )}
               </div>
               <div className="quiz-actions">
+                {/* 根据测验状态显示不同的操作按钮 */}
+                
+                {/* 去做题按钮：只在测验进行中时显示 */}
+                {new Date() >= new Date(Number(quiz.startTime) / 1000) &&
+                  new Date() <= new Date(Number(quiz.endTime) / 1000) && (
+                    <button
+                      className="action-button primary"
+                      onClick={() => navigate(`/quiz/${quiz.id}`)}
+                    >
+                      去做题
+                    </button>
+                  )}
+
                 {/* 查看排名按钮：所有测验都可以查看排名 */}
                 <button
-                  className="action-button primary"
+                  className="action-button secondary"
                   onClick={() => navigate(`/quiz-rank/${quiz.id}`)}
                 >
                   查看排名
-                </button>
-
-                {/* 复制链接按钮：所有状态下都可显示 */}
-                <button
-                  className="action-button secondary"
-                  onClick={() => copyQuizLink(quiz.id)}
-                >
-                  复制链接
                 </button>
               </div>
             </div>

@@ -304,7 +304,7 @@ const QuizRankings: React.FC = () => {
             className="action-button primary"
             onClick={() => navigate('/')}
           >
-            Back to All Quizzes
+            Back to Quizzes
           </button>
         </div>
       </div>
@@ -323,7 +323,7 @@ const QuizRankings: React.FC = () => {
             className="action-button primary"
             onClick={() => navigate('/')}
           >
-            Back to All Quizzes
+            Back to Quizzes
           </button>
         </div>
       </div>
@@ -335,11 +335,11 @@ const QuizRankings: React.FC = () => {
       <div className="quiz-info">
         <h2>{quiz.title}</h2>
         <p className="quiz-description">{quiz.description}</p>
-        <div className="quiz-meta">
-          <span className="meta-item">
+        <div className="quiz-meta quiz-meta--rankings">
+          <span>
             <strong>Creator:</strong> {quiz.creatorNickname}
           </span>
-          <span className="meta-item">
+          <span>
             <strong>Questions:</strong> {quiz.questions.length}
           </span>
           <span className="meta-item">
