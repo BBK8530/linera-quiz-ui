@@ -1,65 +1,155 @@
-import { gql } from '@apollo/client';
-
-export const GET_QUIZZES = gql`
-  query GetQuizzes {
-    quizzes {
+export const GET_QUIZ_SETS = `
+  query GetQuizSets($limit: Int, $offset: Int, $sortBy: String, $sortDirection: SortDirection) {
+    quizSets(limit: $limit, offset: $offset, sortBy: $sortBy, sortDirection: $sortDirection) {
       id
       title
       description
-      duration
-      creator_nickname
-      is_started
-      is_ended
-      registered_count
+      creatorNickname
       questions {
         id
-        text
-        options
-        correct_answer
       }
-      created_at
-    }
-  }
-`;
-
-export const GET_QUIZ = gql`
-  query GetQuiz($quizId: ID!) {
-    quiz(id: $quizId) {
-      id
-      title
-      description
-      duration
-      creator_nickname
-      is_started
-      is_ended
-      registered_count
-      questions {
-        id
-        text
-        options
-        correct_answer
-      }
-    }
-  }
-`;
-
-export const GET_USER = gql`
-  query GetUser($walletAddress: String!) {
-    user(walletAddress: $walletAddress) {
-      nickname
-      walletAddress
+      startTime
+      endTime
+      mode
+      startMode
+      isStarted
+      participantCount
       createdAt
     }
   }
 `;
 
-export const GET_LEADERBOARD = gql`
-  query GetLeaderboard($quizId: ID!) {
-    leaderboard(quiz_id: $quizId) {
-      user_nickname
-      score
-      time_used
-      rank
+export const GET_QUIZ_SET = `
+  query GetQuizSet($quizId: Int!) {
+    quizSet(quizId: $quizId) {
+      id
+      title
+      description
+      creatorNickname
+      startTime
+      endTime
+      mode
+      startMode
+      isStarted
+      participantCount
+      questions {
+        id
+        text
+        options
+        points
+        type
+      }
+      createdAt
     }
+  }
+`;
+
+export const GET_USER_ATTEMPTS = `
+  query GetUserAttempts($user: String!, $limit: Int, $offset: Int, $sortBy: String, $sortDirection: SortDirection) {
+    userAttempts(user: $user, limit: $limit, offset: $offset, sortBy: $sortBy, sortDirection: $sortDirection) {
+      quizId
+      attempt {
+        quizId
+        user
+        nickname
+        score
+        timeTaken
+        completedAt
+      }
+    }
+  }
+`;
+
+export const GET_LEADERBOARD = `
+  query GetLeaderboard {
+    leaderboard {
+      nickname
+      score
+      timeTaken
+      completedAt
+    }
+  }
+`;
+
+export const GET_QUIZ_LEADERBOARD = `
+  query GetQuizLeaderboard($quizId: Int!) {
+    quizLeaderboard(quizId: $quizId) {
+      nickname
+      score
+      timeTaken
+      completedAt
+    }
+  }
+`;
+
+export const GET_USER_PARTICIPATIONS = `
+  query GetUserParticipations($user: String!) {
+    userParticipations(user: $user)
+  }
+`;
+
+export const GET_USER_CREATED_QUIZZES = `
+  query GetUserCreatedQuizzes($nickname: String!, $limit: Int, $offset: Int, $sortBy: String, $sortDirection: SortDirection) {
+    getUserCreatedQuizzes(nickname: $nickname, limit: $limit, offset: $offset, sortBy: $sortBy, sortDirection: $sortDirection) {
+      id
+      title
+      description
+      creatorNickname
+      startTime
+      endTime
+      mode
+      startMode
+      isStarted
+      participantCount
+    }
+  }
+`;
+
+export const GET_USER_PARTICIPATED_QUIZZES = `
+  query GetUserParticipatedQuizzes($walletAddress: String!, $limit: Int, $offset: Int, $sortBy: String, $sortDirection: SortDirection) {
+    getUserParticipatedQuizzes(walletAddress: $walletAddress, limit: $limit, offset: $offset, sortBy: $sortBy, sortDirection: $sortDirection) {
+      id
+      title
+      description
+      creatorNickname
+      startTime
+      endTime
+      mode
+      startMode
+      isStarted
+      participantCount
+    }
+  }
+`;
+
+export const GET_USER = `
+  query GetUser($walletAddress: String!) {
+    user(walletAddress: $walletAddress) {
+      walletAddress
+      nickname
+      createdAt
+    }
+  }
+`;
+
+export const GET_USER_BY_NICKNAME = `
+  query GetUserByNickname($nickname: String!) {
+    userByNickname(nickname: $nickname) {
+      walletAddress
+      nickname
+      createdAt
+    }
+  }
+`;
+
+export const GET_QUIZ_PARTICIPANTS = `
+  query GetQuizParticipants($quizId: Int!) {
+    getQuizParticipants(quizId: $quizId)
+  }
+`;
+
+export const IS_USER_PARTICIPATED = `
+  query IsUserParticipated($quizId: Int!, $walletAddress: String!) {
+    isUserParticipated(quizId: $quizId, walletAddress: $walletAddress)
   }
 `;

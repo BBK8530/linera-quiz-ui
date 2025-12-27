@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useConnection } from '../contexts/ConnectionContext';
 import useNotification from '../hooks/useNotification';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { GET_USER } from '../graphql/quizQueries';
+import { SET_NICKNAME } from '../graphql/quizMutations';
 
 interface NicknameSettingProps {
   onNicknameSet?: () => void;
@@ -51,16 +53,6 @@ const NicknameSetting: React.FC<NicknameSettingProps> = ({ onNicknameSet }) => {
         return;
       }
 
-      const query = `
-        query GetUser($walletAddress: String!) {
-          user(walletAddress: $walletAddress) {
-            nickname
-            walletAddress
-            createdAt
-          }
-        }
-      `;
-
       const variables = {
         walletAddress: primaryWallet.address.toLowerCase(),
       };
@@ -68,7 +60,7 @@ const NicknameSetting: React.FC<NicknameSettingProps> = ({ onNicknameSet }) => {
       try {
         isQueryingRef.current = true;
         const result = await queryApplication({
-          query,
+          query: GET_USER,
           variables,
         });
         if (
@@ -143,7 +135,12 @@ const NicknameSetting: React.FC<NicknameSettingProps> = ({ onNicknameSet }) => {
 
       // 使用ConnectionContext发送变更请求
       await queryApplication({
-        query: `mutation { setNickname(field0: { nickname: "${nicknameInput.trim()}" }) }`,
+        query: SET_NICKNAME,
+        variables: {
+          field0: {
+            nickname: nicknameInput.trim()
+          }
+        },
       });
 
       success('昵称设置成功');

@@ -3,12 +3,14 @@ import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useConnection } from '../contexts/ConnectionContext';
 import useNotification from '../hooks/useNotification';
 import { useNavigate } from 'react-router-dom';
+import { CREATE_QUIZ } from '../graphql/quizMutations';
+import type { QuestionParamsInput } from '../graphql/quizTypes';
 
-interface Question {
-  text: string;
-  options: string[];
+
+// Local interface to match form fields with backend types
+interface LocalQuestion
+  extends Omit<QuestionParamsInput, 'correctOptions' | 'questionType'> {
   correct_options: number[];
-  points: number;
   question_type: 'single' | 'multiple';
 }
 
@@ -20,13 +22,14 @@ const CreateQuizForm: React.FC = () => {
   const [timeLimit, setTimeLimit] = useState<number>(300); // Default 5 minutes
   const [mode, setMode] = useState<string>('public'); // "public" or "registration"
   const [startMode, setStartMode] = useState<string>('auto'); // "auto" or "manual"
-  const [questions, setQuestions] = useState<Question[]>([
+  const [questions, setQuestions] = useState<LocalQuestion[]>([
     {
       text: '',
       options: ['', '', '', ''],
       correct_options: [],
       points: 10,
       question_type: 'single',
+      id: '',
     },
   ]);
 
@@ -52,13 +55,14 @@ const CreateQuizForm: React.FC = () => {
         correct_options: [],
         points: 10,
         question_type: 'single',
+        id: '',
       },
     ]);
   };
 
   const handleQuestionChange = (
     index: number,
-    field: keyof Question,
+    field: keyof LocalQuestion,
     value: string | number | number[] | 'single' | 'multiple',
   ) => {
     const updatedQuestions = [...questions];
@@ -108,6 +112,7 @@ const CreateQuizForm: React.FC = () => {
         correct_options: [],
         points: 10,
         question_type: 'single',
+        id: '',
       },
     ]);
   };
@@ -229,24 +234,20 @@ const CreateQuizForm: React.FC = () => {
 
       // Use Linera SDK for mutation via ConnectionContext
       await queryApplication({
-        query: `mutation {
-          createQuiz(
-            field0: {
-              title: "${title.trim()}",
-              description: "${description.trim()}",
-              questions: ${JSON.stringify(formattedQuestions).replace(
-                /"([^"]+)":/g,
-                '$1:',
-              )},
-              timeLimit: ${timeLimit},
-              startTime: "${startTimestamp}",
-              endTime: "${endTimestamp}",
-              nickname: "${user.username || 'QuizCreator'}",
-              mode: "${mode}",
-              startMode: "${startMode}"
-            }
-          )
-        }`,
+        query: CREATE_QUIZ,
+        variables: {
+          field0: {
+            title: title.trim(),
+            description: description.trim(),
+            questions: formattedQuestions,
+            timeLimit: timeLimit,
+            startTime: startTimestamp,
+            endTime: endTimestamp,
+            nickname: user.username || 'QuizCreator',
+            mode: mode,
+            startMode: startMode,
+          },
+        },
       });
 
       success('测验创建成功！');

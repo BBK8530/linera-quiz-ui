@@ -1,29 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useConnection } from '../contexts/ConnectionContext';
+import { GET_QUIZ_SET, GET_QUIZ_LEADERBOARD } from '../graphql/quizQueries';
+import type { LeaderboardEntry, QuizSetView } from '../graphql/quizTypes';
 
-interface Quiz {
-  id: string;
-  title: string;
-  description: string;
-  duration: number;
-  creatorNickname: string;
-  isStarted: boolean;
-  isEnded: boolean;
-  registeredCount: number;
-  questions: Array<{
-    id: string;
-    text: string;
-    options: string[];
-    correctAnswer: string;
-  }>;
-  createdAt: string;
-}
-
-interface Ranking {
-  nickname: string;
-  score: number;
-  completedAt: string;
+// Local interface to match component needs
+interface LocalRanking extends LeaderboardEntry {
   rank: number;
 }
 
@@ -32,8 +14,8 @@ const QuizRankings: React.FC = () => {
   const navigate = useNavigate();
   const { queryApplication, onNewBlock, offNewBlock } = useConnection();
 
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [rankings, setRankings] = useState<Ranking[]>([]);
+  const [quiz, setQuiz] = useState<QuizSetView | null>(null);
+  const [rankings, setRankings] = useState<LocalRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -50,31 +32,9 @@ const QuizRankings: React.FC = () => {
 
     try {
       // Fetch quiz details
-      const quizQuery = `
-        query GetQuiz($quizId: String!) {
-          quiz(id: $quizId) {
-            id
-            title
-            description
-            duration
-            creatorNickname
-            isStarted
-            isEnded
-            registeredCount
-            questions {
-              id
-              text
-              options
-              correctAnswer
-            }
-            createdAt
-          }
-        }
-      `;
-
       const quizResult = await queryApplication({
-        query: quizQuery,
-        variables: { quizId },
+        query: GET_QUIZ_SET,
+        variables: { quizId: parseInt(quizId) },
       });
 
       if (
@@ -83,9 +43,9 @@ const QuizRankings: React.FC = () => {
         'data' in quizResult &&
         quizResult.data &&
         typeof quizResult.data === 'object' &&
-        'quiz' in quizResult.data
+        'quizSet' in quizResult.data
       ) {
-        setQuiz(quizResult.data.quiz as Quiz);
+        setQuiz(quizResult.data.quizSet as QuizSetView);
       } else {
         setError('Quiz not found');
       }
@@ -100,20 +60,9 @@ const QuizRankings: React.FC = () => {
     if (!quizId) return;
 
     try {
-      const rankingsQuery = `
-        query GetQuizRankings($quizId: String!) {
-          quizRankings(quizId: $quizId) {
-            nickname
-            score
-            completedAt
-            rank
-          }
-        }
-      `;
-
       const rankingsResult = await queryApplication({
-        query: rankingsQuery,
-        variables: { quizId },
+        query: GET_QUIZ_LEADERBOARD,
+        variables: { quizId: parseInt(quizId) },
       });
 
       if (
@@ -122,9 +71,9 @@ const QuizRankings: React.FC = () => {
         'data' in rankingsResult &&
         rankingsResult.data &&
         typeof rankingsResult.data === 'object' &&
-        'quizRankings' in rankingsResult.data
+        'quizLeaderboard' in rankingsResult.data
       ) {
-        setRankings(rankingsResult.data.quizRankings as Ranking[]);
+        setRankings(rankingsResult.data.quizLeaderboard as LocalRanking[]);
       }
     } catch (err) {
       console.error('Failed to fetch quiz rankings:', err);
@@ -344,7 +293,11 @@ const QuizRankings: React.FC = () => {
           </span>
           <span className="meta-item">
             <strong>Status:</strong>{' '}
-            {quiz.isEnded ? '已结束' : quiz.isStarted ? '进行中' : '待开始'}
+            {new Date() > new Date(Number(quiz.endTime) / 1000)
+              ? '已结束'
+              : quiz.isStarted
+              ? '进行中'
+              : '待开始'}
           </span>
         </div>
         <button

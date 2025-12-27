@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useConnection } from '../contexts/ConnectionContext';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { GET_LEADERBOARD } from '../graphql/quizQueries';
+import type { LeaderboardEntry } from '../graphql/quizTypes';
 
-interface UserRanking {
-  nickname: string;
-  totalScore: number;
-  quizzesCompleted: number;
-  averageScore: number;
+interface LocalRanking extends LeaderboardEntry {
   rank: number;
 }
 
@@ -15,7 +13,7 @@ const GlobalRankings: React.FC = () => {
   const { connectToLinera, queryApplication, onNewBlock, offNewBlock } =
     useConnection();
 
-  const [rankings, setRankings] = useState<UserRanking[]>([]);
+  const [rankings, setRankings] = useState<LocalRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,7 +23,7 @@ const GlobalRankings: React.FC = () => {
   const pageSize = 10;
 
   // Fetch global rankings
-  const fetchGlobalRankings = useCallback(async () => {
+  const fetchLeaderboard = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -33,39 +31,33 @@ const GlobalRankings: React.FC = () => {
       // Ensure connected to Linera
       await connectToLinera();
 
-      // Fetch global rankings
-      const query = `
-        query GetGlobalRankings {
-          globalRankings {
-            nickname
-            totalScore
-            quizzesCompleted
-            averageScore
-            rank
-          }
-        }
-      `;
-
       const result = (await queryApplication({
-        query,
-      })) as { data?: { globalRankings: UserRanking[] } };
+        query: GET_LEADERBOARD,
+      })) as { data?: { leaderboard: LocalRanking[] } };
 
-      if (result.data?.globalRankings) {
-        setRankings(result.data.globalRankings);
+      if (result.data?.leaderboard) {
+        // Add rank field to the leaderboard data
+        const rankedLeaderboard = result.data.leaderboard.map(
+          (item, index) => ({
+            ...item,
+            rank: index + 1,
+          }),
+        );
+        setRankings(rankedLeaderboard);
       }
     } catch (err) {
-      console.error('Failed to fetch global rankings:', err);
-      setError('Failed to fetch global rankings');
+      console.error('Failed to fetch leaderboard:', err);
+      setError('Failed to fetch leaderboard');
     } finally {
       setLoading(false);
     }
   }, [connectToLinera, queryApplication]);
 
-  // Handle new block event - refresh global rankings
+  // Handle new block event - refresh leaderboard
   const handleNewBlock = useCallback(() => {
-    console.log('🔄 New block received, refreshing global rankings...');
-    fetchGlobalRankings();
-  }, [fetchGlobalRankings]);
+    console.log('🔄 New block received, refreshing leaderboard...');
+    fetchLeaderboard();
+  }, [fetchLeaderboard]);
 
   // Register new block listener
   useEffect(() => {
@@ -78,23 +70,20 @@ const GlobalRankings: React.FC = () => {
   // Initial data fetch when wallet is connected
   useEffect(() => {
     if (primaryWallet?.address) {
-      fetchGlobalRankings();
+      fetchLeaderboard();
     }
-  }, [primaryWallet?.address, fetchGlobalRankings]);
+  }, [primaryWallet?.address, fetchLeaderboard]);
 
   // Sort rankings
   const sortedRankings = [...rankings].sort((a, b) => {
     let comparison = 0;
 
     switch (sortBy) {
-      case 'totalScore':
-        comparison = a.totalScore - b.totalScore;
+      case 'score':
+        comparison = a.score - b.score;
         break;
-      case 'quizzesCompleted':
-        comparison = a.quizzesCompleted - b.quizzesCompleted;
-        break;
-      case 'averageScore':
-        comparison = a.averageScore - b.averageScore;
+      case 'timeTaken':
+        comparison = a.timeTaken - b.timeTaken;
         break;
       case 'nickname':
         comparison = a.nickname.localeCompare(b.nickname);
@@ -159,16 +148,16 @@ const GlobalRankings: React.FC = () => {
                     style={{ width: '100px', height: '20px' }}
                   ></div>
                 </th>
-                <th className="quizzes-column">
+                <th className="time-column">
                   <div
                     className="skeleton-text"
                     style={{ width: '100px', height: '20px' }}
                   ></div>
                 </th>
-                <th className="average-column">
+                <th className="date-column">
                   <div
                     className="skeleton-text"
-                    style={{ width: '100px', height: '20px' }}
+                    style={{ width: '150px', height: '20px' }}
                   ></div>
                 </th>
               </tr>
@@ -205,7 +194,7 @@ const GlobalRankings: React.FC = () => {
                     <td>
                       <div
                         className="skeleton-text"
-                        style={{ width: '100px', height: '20px' }}
+                        style={{ width: '150px', height: '20px' }}
                       ></div>
                     </td>
                   </tr>
@@ -225,10 +214,7 @@ const GlobalRankings: React.FC = () => {
         </div>
         <div className="error-container">
           <p className="error-message">{error}</p>
-          <button
-            className="action-button primary"
-            onClick={fetchGlobalRankings}
-          >
+          <button className="action-button primary" onClick={fetchLeaderboard}>
             Try Again
           </button>
         </div>
@@ -247,9 +233,8 @@ const GlobalRankings: React.FC = () => {
             value={sortBy}
             onChange={e => handleSort(e.target.value)}
           >
-            <option value="totalScore">Total Score</option>
-            <option value="quizzesCompleted">Quizzes Completed</option>
-            <option value="averageScore">Average Score</option>
+            <option value="score">Score</option>
+            <option value="timeTaken">Time Taken</option>
             <option value="nickname">Nickname</option>
           </select>
           <button
@@ -268,14 +253,14 @@ const GlobalRankings: React.FC = () => {
               <tr>
                 <th className="rank-column">Rank</th>
                 <th className="nickname-column">Nickname</th>
-                <th className="score-column">Total Score</th>
-                <th className="quizzes-column">Quizzes Completed</th>
-                <th className="average-column">Average Score</th>
+                <th className="score-column">Score</th>
+                <th className="time-column">Time Taken</th>
+                <th className="date-column">Completed At</th>
               </tr>
             </thead>
             <tbody>
-              {paginatedRankings.map(ranking => (
-                <tr key={ranking.nickname} className="ranking-row">
+              {paginatedRankings.map((ranking, index) => (
+                <tr key={index} className="ranking-row">
                   <td className="rank-column">
                     <span className={`rank-badge rank-${ranking.rank}`}>
                       #{ranking.rank}
@@ -285,16 +270,14 @@ const GlobalRankings: React.FC = () => {
                     <span className="nickname">{ranking.nickname}</span>
                   </td>
                   <td className="score-column">
-                    <span className="total-score">{ranking.totalScore}</span>
+                    <span className="total-score">{ranking.score}</span>
                   </td>
-                  <td className="quizzes-column">
-                    <span className="quizzes-count">
-                      {ranking.quizzesCompleted}
-                    </span>
+                  <td className="time-column">
+                    <span className="time-count">{ranking.timeTaken}s</span>
                   </td>
-                  <td className="average-column">
-                    <span className="average-score">
-                      {ranking.averageScore.toFixed(2)}
+                  <td className="date-column">
+                    <span className="date">
+                      {new Date(ranking.completedAt).toLocaleString()}
                     </span>
                   </td>
                 </tr>
@@ -337,7 +320,7 @@ const GlobalRankings: React.FC = () => {
                 <li key={index} className="top-user-item">
                   <span className="medal">{['🥇', '🥈', '🥉'][index]}</span>
                   <span className="user-info">
-                    {ranking.nickname} - {ranking.totalScore} points
+                    {ranking.nickname} - {ranking.score} points
                   </span>
                 </li>
               ))}

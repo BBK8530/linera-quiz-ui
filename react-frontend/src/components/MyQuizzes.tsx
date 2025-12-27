@@ -3,32 +3,8 @@ import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useConnection } from '../contexts/ConnectionContext';
 import { useNavigate } from 'react-router-dom';
 import useNotification from '../hooks/useNotification';
-
-interface Question {
-  id: string;
-  text: string;
-  options: string[];
-  correctAnswer: string;
-}
-
-interface Quiz {
-  id: string;
-  title: string;
-  description: string;
-  duration: number;
-  creatorNickname: string;
-  isStarted: boolean;
-  isEnded: boolean;
-  registeredCount: number;
-  questions: Question[];
-  createdAt: string;
-}
-
-interface User {
-  nickname: string;
-  walletAddress: string;
-  createdAt: string;
-}
+import { GET_USER, GET_USER_CREATED_QUIZZES } from '../graphql/quizQueries';
+import type { UserView, QuizSetView } from '../graphql/quizTypes';
 
 const MyQuizzes: React.FC = () => {
   const { primaryWallet } = useDynamicContext();
@@ -39,10 +15,10 @@ const MyQuizzes: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [currentPage, setCurrentPage] = useState(1);
-  const [filteredQuizzes, setFilteredQuizzes] = useState<Quiz[]>([]);
-  const [allQuizzes, setAllQuizzes] = useState<Quiz[]>([]);
+  const [filteredQuizzes, setFilteredQuizzes] = useState<QuizSetView[]>([]);
+  const [allQuizzes, setAllQuizzes] = useState<QuizSetView[]>([]);
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserView | null>(null);
   const [hasFetchedUser, setHasFetchedUser] = useState(false);
 
   // Add query state tracking using useRef to avoid function re-creation
@@ -67,24 +43,14 @@ const MyQuizzes: React.FC = () => {
       // Ensure connected to Linera
       await connectToLinera();
 
-      const query = `
-        query GetUser($walletAddress: String!) {
-          user(walletAddress: $walletAddress) {
-            nickname
-            walletAddress
-            createdAt
-          }
-        }
-      `;
-
       const variables = {
         walletAddress: primaryWallet.address.toLowerCase(),
       };
 
       const result = (await queryApplication({
-        query,
+        query: GET_USER,
         variables,
-      })) as { data: { user: User } };
+      })) as { data: { user: UserView } };
       setUser(result.data.user);
       setHasFetchedUser(true);
     } catch (err) {
@@ -99,7 +65,7 @@ const MyQuizzes: React.FC = () => {
 
   // Process quiz data with search and sorting
   const processQuizData = useCallback(
-    (quizzes: Quiz[]) => {
+    (quizzes: QuizSetView[]) => {
       setAllQuizzes(quizzes);
       let processed = [...quizzes];
 
@@ -174,12 +140,26 @@ const MyQuizzes: React.FC = () => {
           // Ensure connected to Linera
           await connectToLinera();
 
-          const result = (await queryApplication({
-            query: `query { quizSet { id title description duration creatorNickname isStarted isEnded registeredCount questions { id text options correctAnswer } createdAt } }`,
-          })) as { data: { quizSet: Quiz[] } };
+          // Only fetch user-created quizzes if user has a nickname
+          if (user?.nickname) {
+            const variables = {
+              nickname: user.nickname,
+              limit: pageSize,
+              offset: 0,
+              sortBy: sortBy,
+              sortDirection: sortBy === 'createdAt' ? 'desc' : 'asc',
+            };
 
-          if (result.data?.quizSet) {
-            setAllQuizzes(result.data.quizSet);
+            const result = (await queryApplication({
+              query: GET_USER_CREATED_QUIZZES,
+              variables,
+            })) as { data: { getUserCreatedQuizzes: QuizSetView[] } };
+
+            if (result.data?.getUserCreatedQuizzes) {
+              setAllQuizzes(result.data.getUserCreatedQuizzes);
+            }
+          } else {
+            setAllQuizzes([]);
           }
         } catch (err) {
           // Silent error handling to avoid console noise
@@ -201,7 +181,15 @@ const MyQuizzes: React.FC = () => {
         debounceTimerRef.current = timer;
       }
     },
-    [primaryWallet?.address, connectToLinera, queryApplication, loading],
+    [
+      primaryWallet?.address,
+      connectToLinera,
+      queryApplication,
+      loading,
+      user?.nickname,
+      sortBy,
+      pageSize,
+    ],
   );
 
   useEffect(() => {
@@ -338,7 +326,7 @@ const MyQuizzes: React.FC = () => {
       {/* Quiz Grid */}
       {paginatedQuizzes.length > 0 ? (
         <div className="quiz-grid">
-          {paginatedQuizzes.map((quiz: Quiz) => (
+          {paginatedQuizzes.map((quiz: QuizSetView) => (
             <div key={quiz.id} className="quiz-card">
               <h3>{quiz.title}</h3>
               <p className="quiz-description">{quiz.description}</p>
@@ -351,13 +339,17 @@ const MyQuizzes: React.FC = () => {
                 </span>
               </div>
               <div className="quiz-status">
-                {quiz.isEnded && <span className="status ended">已结束</span>}
-                {quiz.isStarted && !quiz.isEnded && (
-                  <span className="status started">进行中</span>
+                {new Date() > new Date(Number(quiz.endTime) / 1000) && (
+                  <span className="status ended">已结束</span>
                 )}
-                {!quiz.isStarted && !quiz.isEnded && (
-                  <span className="status pending">待开始</span>
-                )}
+                {quiz.isStarted &&
+                  new Date() <= new Date(Number(quiz.endTime) / 1000) && (
+                    <span className="status started">进行中</span>
+                  )}
+                {!quiz.isStarted &&
+                  new Date() < new Date(Number(quiz.endTime) / 1000) && (
+                    <span className="status pending">待开始</span>
+                  )}
               </div>
               <div className="quiz-actions">
                 <button
@@ -368,7 +360,7 @@ const MyQuizzes: React.FC = () => {
                 </button>
                 <button
                   className="action-button secondary"
-                  onClick={() => copyQuizLink(quiz.id)}
+                  onClick={() => copyQuizLink(quiz.id.toString())}
                 >
                   Copy Link
                 </button>
