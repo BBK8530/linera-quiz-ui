@@ -5,6 +5,18 @@
   padding: 0;
 }
 
+/* 全局警告banner样式 */
+.global-banner {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 12px 20px;
+  text-align: center;
+  font-size: 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #ffeeba;
+}
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
@@ -31,10 +43,10 @@ body {
 
 /* 头部样式 */
 .app-header {
-  background: linear-gradient(135deg, #DE2A02 0%, #E84E24 100%);
+  background: linear-gradient(135deg, #de2a02 0%, #e84e24 100%);
   color: white;
-  padding: 1.5rem 0;
-  margin-bottom: 2rem;
+  padding: 0.8rem 0; /* 减少上下内边距以降低高度 */
+  margin-bottom: 1rem;
   border-radius: 0 0 20px 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -46,6 +58,12 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
 }
 
 /* 导航链接样式 */
@@ -76,7 +94,7 @@ body {
 }
 
 .header-content h1 {
-  font-size: 2.5rem;
+  font-size: 1.8rem; /* 减小标题字体大小 */
   font-weight: 700;
   margin-bottom: 0.5rem;
 }
@@ -148,7 +166,12 @@ button::before {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 
@@ -170,7 +193,7 @@ button:disabled {
 }
 
 .create-quiz-button {
-  background: linear-gradient(135deg, #DE2A02 0%, #E84E24 100%);
+  background: linear-gradient(135deg, #de2a02 0%, #e84e24 100%);
   color: white;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -207,7 +230,7 @@ button:disabled {
 /* 文本按钮 */
 .text-button {
   background: transparent;
-  color: #DE2A02;
+  color: #de2a02;
   padding: 0.5rem;
   border-radius: 4px;
   font-weight: 500;
@@ -285,7 +308,7 @@ button:disabled {
 
 .search-input:focus {
   outline: none;
-  border-color: #DE2A02;
+  border-color: #de2a02;
   box-shadow: 0 0 0 3px rgba(222, 42, 2, 0.1);
 }
 
@@ -301,7 +324,7 @@ button:disabled {
 
 .sort-dropdown select:focus {
   outline: none;
-  border-color: #DE2A02;
+  border-color: #de2a02;
   box-shadow: 0 0 0 3px rgba(222, 42, 2, 0.1);
 }
 
@@ -448,13 +471,13 @@ button:disabled {
   flex: 0 0 auto;
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
-  width: auto !important;
+  width: auto;
   min-width: 120px;
   max-width: 200px;
 }
 
 .action-button.primary {
-  background: linear-gradient(135deg, #DE2A02 0%, #E84E24 100%);
+  background: linear-gradient(135deg, #de2a02 0%, #e84e24 100%);
   color: white;
 }
 
@@ -510,9 +533,9 @@ button:disabled {
 }
 
 /* 输入框样式 */
-.create-quiz-form input[type="text"],
-.create-quiz-form input[type="number"],
-.create-quiz-form input[type="datetime-local"],
+.create-quiz-form input[type='text'],
+.create-quiz-form input[type='number'],
+.create-quiz-form input[type='datetime-local'],
 .create-quiz-form textarea {
   width: 100%;
   padding: 0.75rem 1rem;
@@ -523,12 +546,12 @@ button:disabled {
   background: white;
 }
 
-.create-quiz-form input[type="text"]:focus,
-.create-quiz-form input[type="number"]:focus,
-.create-quiz-form input[type="datetime-local"]:focus,
+.create-quiz-form input[type='text']:focus,
+.create-quiz-form input[type='number']:focus,
+.create-quiz-form input[type='datetime-local']:focus,
 .create-quiz-form textarea:focus {
   outline: none;
-  border-color: #DE2A02;
+  border-color: #de2a02;
   box-shadow: 0 0 0 3px rgba(222, 42, 2, 0.1);
 }
 
@@ -571,14 +594,13 @@ button:disabled {
 }
 
 .create-quiz-form .submit-button {
-  background: linear-gradient(135deg, #DE2A02 0%, #E84E24 100%);
+  background: linear-gradient(135deg, #de2a02 0%, #e84e24 100%);
   color: white;
   padding: 1rem 2.5rem;
   font-size: 1.1rem;
   font-weight: 600;
   border: none;
   border-radius: 8px;
-  cursor: pointer;
   transition: all 0.3s ease;
   min-width: 200px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -683,9 +705,9 @@ button:disabled {
 }
 
 .page-button.active {
-  background: linear-gradient(135deg, #DE2A02 0%, #E84E24 100%);
+  background: linear-gradient(135deg, #de2a02 0%, #e84e24 100%);
   color: white;
-  border-color: #DE2A02;
+  border-color: #de2a02;
 }
 
 /* 创建测验表单 */
@@ -731,7 +753,7 @@ button:disabled {
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #DE2A02;
+  border-color: #de2a02;
   box-shadow: 0 0 0 3px rgba(222, 42, 2, 0.1);
   transform: translateY(-1px);
 }
@@ -820,8 +842,8 @@ button:disabled {
 }
 
 /* 自定义单选按钮和复选框样式 */
-input[type="radio"],
-input[type="checkbox"] {
+input[type='radio'],
+input[type='checkbox'] {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -840,18 +862,18 @@ input[type="checkbox"] {
   padding: 0;
 }
 
-input[type="radio"] {
+input[type='radio'] {
   border-radius: 50%;
 }
 
-input[type="radio"]:checked,
-input[type="checkbox"]:checked {
-  background-color: #DE2A02;
-  border-color: #DE2A02;
+input[type='radio']:checked,
+input[type='checkbox']:checked {
+  background-color: #de2a02;
+  border-color: #de2a02;
 }
 
-input[type="checkbox"]:checked::after {
-  content: "";
+input[type='checkbox']:checked::after {
+  content: '';
   position: absolute;
   top: 2px;
   left: 6px;
@@ -862,8 +884,8 @@ input[type="checkbox"]:checked::after {
   transform: rotate(45deg);
 }
 
-input[type="radio"]:checked::after {
-  content: "";
+input[type='radio']:checked::after {
+  content: '';
   position: absolute;
   top: 50%;
   left: 50%;
@@ -874,14 +896,14 @@ input[type="radio"]:checked::after {
   background-color: white;
 }
 
-input[type="radio"]:hover,
-input[type="checkbox"]:hover {
-  border-color: #DE2A02;
+input[type='radio']:hover,
+input[type='checkbox']:hover {
+  border-color: #de2a02;
   box-shadow: 0 0 0 3px rgba(222, 42, 2, 0.1);
 }
 
-input[type="radio"]:disabled,
-input[type="checkbox"]:disabled {
+input[type='radio']:disabled,
+input[type='checkbox']:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -1003,7 +1025,7 @@ input[type="checkbox"]:disabled {
 }
 
 .add-question {
-  background: linear-gradient(135deg, #DE2A02 0%, #E84E24 100%);
+  background: linear-gradient(135deg, #de2a02 0%, #e84e24 100%);
   color: white;
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
@@ -1046,7 +1068,7 @@ input[type="checkbox"]:disabled {
 
 .nickname-input:focus {
   outline: none;
-  border-color: #DE2A02;
+  border-color: #de2a02;
   box-shadow: 0 0 0 3px rgba(222, 42, 2, 0.1);
   transform: translateY(-1px);
 }
@@ -1059,13 +1081,12 @@ input[type="checkbox"]:disabled {
 }
 
 .nickname-submit-btn {
-  background: linear-gradient(135deg, #DE2A02 0%, #E84E24 100%);
+  background: linear-gradient(135deg, #de2a02 0%, #e84e24 100%);
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 500;
-  cursor: pointer;
   transition: all 0.3s ease;
   border: none;
   display: flex;
@@ -1094,7 +1115,6 @@ input[type="checkbox"]:disabled {
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 500;
-  cursor: pointer;
   transition: all 0.3s ease;
   border: none;
   display: flex;
@@ -1138,13 +1158,12 @@ input[type="checkbox"]:disabled {
 
 .nickname-edit-btn {
   background: transparent;
-  color: #DE2A02;
-  border: 2px solid #DE2A02;
+  color: #de2a02;
+  border: 2px solid #de2a02;
   padding: 0.5rem 1rem;
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 600;
-  cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
@@ -1153,7 +1172,7 @@ input[type="checkbox"]:disabled {
 }
 
 .nickname-edit-btn:hover {
-  background: #DE2A02;
+  background: #de2a02;
   color: white;
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -1164,69 +1183,16 @@ input[type="checkbox"]:disabled {
   .nickname-input-group {
     flex-direction: column;
   }
-  
+
   .nickname-submit-btn,
   .nickname-cancel-btn {
     width: 100%;
   }
-  
+
   .nickname-display {
     flex-direction: column;
     align-items: flex-start;
   }
-}
-
-/* 登出图标按钮 */
-.logout-icon-button {
-  background: transparent;
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  gap: 0.5rem;
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.settings-icon-button {
-  background: transparent;
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  gap: 0.5rem;
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.logout-icon-button:hover {
-  background: #DE2A02;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.logout-icon-button:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* 确保图标可见 */
-.logout-icon-button svg {
-  display: block;
-  width: 18px;
-  height: 18px;
-  fill: currentColor;
 }
 
 /* 首页样式 */
@@ -1235,7 +1201,7 @@ input[type="checkbox"]:disabled {
   justify-content: center;
   align-items: center;
   padding: 2rem;
-  margin: 10rem 0;
+  margin: 6rem 0;
   text-align: center;
 }
 
@@ -1266,7 +1232,7 @@ input[type="checkbox"]:disabled {
 
 /* 主要按钮样式 */
 .btn-primary {
-  background: linear-gradient(135deg, #DE2A02 0%, #E84E24 100%);
+  background: linear-gradient(135deg, #de2a02 0%, #e84e24 100%);
   color: white;
   padding: 0.75rem 2rem;
   border-radius: 8px;
@@ -1315,7 +1281,7 @@ input[type="checkbox"]:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  min-height: 50vh;
   background-color: #f5f5f5;
   padding: 2rem;
 }
@@ -1333,7 +1299,7 @@ input[type="checkbox"]:disabled {
 .project-name {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #DE2A02;
+  color: #de2a02;
   margin-bottom: 1rem;
 }
 
@@ -1373,15 +1339,19 @@ input[type="checkbox"]:disabled {
   width: 60px;
   height: 60px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #DE2A02;
+  border-top: 4px solid #de2a02;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 2rem;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {
@@ -1393,8 +1363,8 @@ input[type="checkbox"]:disabled {
 /* 登录按钮和用户信息 */
 .login-button {
   background: white;
-  color: #DE2A02;
-  border: 2px solid #DE2A02;
+  color: #de2a02;
+  border: 2px solid #de2a02;
   padding: 0.4rem 0.8rem;
   border-radius: 8px;
   font-weight: 600;
@@ -1403,7 +1373,7 @@ input[type="checkbox"]:disabled {
 }
 
 .login-button:hover {
-  background: #DE2A02;
+  background: #de2a02;
   color: white;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -1433,11 +1403,13 @@ input[type="checkbox"]:disabled {
 
 .user-info {
   display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  flex-direction: row;
+  gap: 0.5rem;
   font-size: 0.85rem;
   white-space: nowrap;
   color: white;
+  justify-content: center;
+  align-items: center;
 }
 
 .connection-status {
@@ -1488,7 +1460,7 @@ input[type="checkbox"]:disabled {
 }
 
 .submit-button {
-  background: linear-gradient(135deg, #DE2A02 0%, #E84E24 100%);
+  background: linear-gradient(135deg, #de2a02 0%, #e84e24 100%);
   color: white;
   padding: 1rem 2.5rem;
   font-size: 1.1rem;
@@ -1550,7 +1522,7 @@ input[type="checkbox"]:disabled {
 .step-number {
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #DE2A02 0%, #E84E24 100%);
+  background: linear-gradient(135deg, #de2a02 0%, #e84e24 100%);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -1589,7 +1561,7 @@ input[type="checkbox"]:disabled {
   width: 60px;
   height: 60px;
   border: 4px solid rgba(222, 42, 2, 0.2);
-  border-top: 4px solid #DE2A02;
+  border-top: 4px solid #de2a02;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1.5rem;
@@ -1597,8 +1569,12 @@ input[type="checkbox"]:disabled {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-container p {
@@ -1621,13 +1597,13 @@ input[type="checkbox"]:disabled {
 }
 
 .retry-button {
-  background: #DE2A02;
+  background: #de2a02;
   color: white;
   margin-top: 1rem;
 }
 
 .retry-button:hover {
-  background: #C42400;
+  background: #c42400;
 }
 
 /* 空状态 */
@@ -1659,8 +1635,12 @@ input[type="checkbox"]:disabled {
 }
 
 @keyframes skeleton-loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .skeleton-card {
@@ -1703,29 +1683,29 @@ input[type="checkbox"]:disabled {
   .header-content h1 {
     font-size: 2rem;
   }
-  
+
   .content-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
   }
-  
+
   .quiz-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .form-row {
     flex-direction: column;
   }
-  
+
   .usage-steps {
     grid-template-columns: 1fr;
   }
-  
+
   .quiz-actions {
     flex-direction: column;
   }
-  
+
   .option-item {
     flex-direction: column;
     gap: 0.75rem;
@@ -1736,15 +1716,15 @@ input[type="checkbox"]:disabled {
   .app-container {
     padding: 0 10px;
   }
-  
+
   .content-wrapper {
     padding: 1.5rem 1rem;
   }
-  
+
   .quiz-list-filters {
     flex-direction: column;
   }
-  
+
   .form-row .form-group {
     min-width: 100%;
   }
@@ -1775,18 +1755,18 @@ input[type="checkbox"]:disabled {
   transition: all 0.3s ease;
   background-color: white;
   border-left: 4px solid;
-  }
+}
 
 @keyframes slideIn {
   from {
     transform: translateX(100%);
     opacity: 0;
-      }
+  }
   to {
     transform: translateX(0);
     opacity: 1;
   }
-  }
+}
 
 .notification-closing {
   animation: slideOut 0.3s ease-in forwards;
@@ -1796,7 +1776,7 @@ input[type="checkbox"]:disabled {
   from {
     transform: translateX(0);
     opacity: 1;
-    }
+  }
   to {
     transform: translateX(100%);
     opacity: 0;
@@ -1836,12 +1816,12 @@ input[type="checkbox"]:disabled {
 
 /* 不同类型通知的样式 */
 .notification-success {
-  border-left-color: #4CAF50;
+  border-left-color: #4caf50;
   background-color: #f0fff4;
 }
 
 .notification-success .notification-icon {
-  color: #4CAF50;
+  color: #4caf50;
 }
 
 .notification-error {
@@ -1863,12 +1843,12 @@ input[type="checkbox"]:disabled {
 }
 
 .notification-info {
-  border-left-color: #2196F3;
+  border-left-color: #2196f3;
   background-color: #e3f2fd;
 }
 
 .notification-info .notification-icon {
-  color: #2196F3;
+  color: #2196f3;
 }
 
 /* 响应式通知 */
@@ -1930,7 +1910,6 @@ input[type="checkbox"]:disabled {
   border: none;
   font-size: 1.5rem;
   color: #718096;
-  cursor: pointer;
   padding: 0;
   width: 30px;
   height: 30px;
@@ -1958,11 +1937,12 @@ input[type="checkbox"]:disabled {
   border-top: 1px solid #e2e8f0;
 }
 
-/* Settings icon button */
-.settings-icon-button {
+/* 登出图标按钮 */
+.settings-icon-button,
+.logout-icon-button {
   background: transparent;
-  color: #DE2A02;
-  border: 2px solid #DE2A02;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   padding: 0.5rem;
   border-radius: 8px;
   font-weight: 600;
@@ -1970,22 +1950,29 @@ input[type="checkbox"]:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
   gap: 0.5rem;
-  width: 48px;
-  height: 48px;
+  background-color: rgba(255, 255, 255, 0.1);
 }
-
-.settings-icon-button:hover {
-  background: #DE2A02;
+.settings-icon-button:hover,
+.logout-icon-button:hover {
+  background: #de2a02;
   color: white;
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
-
-.settings-icon-button:active {
+.settings-icon-button:active,
+.logout-icon-button:active {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 确保图标可见 */
+.settings-icon-button svg,
+.logout-icon-button svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
 }
 
 /* 旋转动画 */
@@ -2060,7 +2047,7 @@ input[type="checkbox"]:disabled {
   width: 40px;
   height: 40px;
   border: 4px solid #f3f4f6;
-  border-top: 4px solid #DE2A02;
+  border-top: 4px solid #de2a02;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -2078,7 +2065,7 @@ input[type="checkbox"]:disabled {
 }
 
 .error-container .error-message {
-  text-align: center !important;
+  text-align: center;
   align-self: center;
 }
 
@@ -2090,7 +2077,7 @@ input[type="checkbox"]:disabled {
   background: #fef2f2;
   border-radius: 8px;
   border: 1px solid #fecaca;
-  text-align: center !important;
+  text-align: center;
   align-self: center;
   max-width: 100%;
   word-wrap: break-word;
@@ -2126,7 +2113,7 @@ input[type="checkbox"]:disabled {
   margin-bottom: 1.5rem;
   max-width: 500px;
   line-height: 1.5;
-  text-align: center !important;
+  text-align: center;
 }
 
 /* 测验头部 */
@@ -2152,7 +2139,7 @@ input[type="checkbox"]:disabled {
 /* 第二个 quiz-meta 定义已合并到统一样式系统中 */
 
 .timer {
-  color: #DE2A02;
+  color: #de2a02;
   font-weight: 600;
   font-size: 1rem;
 }
@@ -2199,7 +2186,7 @@ input[type="checkbox"]:disabled {
 }
 
 .progress-fill {
-  background: linear-gradient(90deg, #DE2A02 0%, #E84E24 100%);
+  background: linear-gradient(90deg, #de2a02 0%, #e84e24 100%);
   height: 100%;
   border-radius: 10px;
   transition: width 0.3s ease;
@@ -2261,12 +2248,17 @@ input[type="checkbox"]:disabled {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 
 .option:hover {
-  border-color: #DE2A02;
+  border-color: #de2a02;
   background: #fef7f0;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(222, 42, 2, 0.15);
@@ -2277,7 +2269,7 @@ input[type="checkbox"]:disabled {
 }
 
 .option.selected {
-  border-color: #DE2A02;
+  border-color: #de2a02;
   background: linear-gradient(135deg, #fef7f0 0%, #fff7ed 100%);
   color: #1f2937;
   font-weight: 600;
@@ -2290,7 +2282,7 @@ input[type="checkbox"]:disabled {
   right: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #DE2A02;
+  color: #de2a02;
   font-weight: bold;
   font-size: 1.2rem;
 }
@@ -2306,7 +2298,7 @@ input[type="checkbox"]:disabled {
   height: 20px;
   margin: 0;
   cursor: pointer;
-  accent-color: #DE2A02;
+  accent-color: #de2a02;
 }
 
 .option-radio {
@@ -2328,42 +2320,46 @@ input[type="checkbox"]:disabled {
 }
 
 .navigation-buttons button {
-  flex: 0 0 auto !important;
-  width: auto !important;
-  min-width: 120px !important;
-  max-width: 200px !important;
-  margin: 0 !important;
-  padding: 0.75rem 1.5rem !important;
-  background: #DE2A02 !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 8px !important;
-  font-size: 1rem !important;
-  font-weight: 500 !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-  text-decoration: none !important;
-  display: inline-block !important;
-  text-align: center !important;
-  box-sizing: border-box !important;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 120px;
+  max-width: 200px;
+  margin: 0;
+  padding: 0.75rem 1.5rem;
+  background: #de2a02;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .navigation-buttons button.secondary {
-  background: #e2e8f0 !important;
-  color: #4a5568 !important;
+  background: #e2e8f0;
+  color: #4a5568;
 }
 
 .navigation-buttons button.secondary:hover {
-  background: #cbd5e0 !important;
+  background: #cbd5e0;
 }
-
+.button-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
 /* 确保结果部分的按钮也不会被撑满 */
 .quiz-result-section .action-button {
-  flex: 0 0 auto !important;
-  width: auto !important;
-  min-width: 120px !important;
-  max-width: 200px !important;
-  margin: 0 auto !important;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 120px;
+  max-width: 200px;
+  margin: 0 auto;
 }
 
 /* 测验结果部分 */
@@ -2431,11 +2427,11 @@ input[type="checkbox"]:disabled {
 
 .quiz-rankings .error-container,
 .global-rankings .error-container {
-  margin: 2rem auto !important;
+  margin: 2rem auto;
   max-width: 600px;
-  width: calc(100% - 4rem) !important;
-  padding: 2rem !important;
-  box-sizing: border-box !important;
+  width: calc(100% - 4rem);
+  padding: 2rem;
+  box-sizing: border-box;
 }
 
 /* 排名侧边栏 */
@@ -2480,7 +2476,7 @@ input[type="checkbox"]:disabled {
 }
 
 .ranking-item .rank {
-  background: linear-gradient(135deg, #DE2A02 0%, #E84E24 100%);
+  background: linear-gradient(135deg, #de2a02 0%, #e84e24 100%);
   color: white;
   font-weight: 700;
   font-size: 0.85rem;
@@ -2518,13 +2514,13 @@ input[type="checkbox"]:disabled {
     flex-direction: column;
     gap: 1.5rem;
   }
-  
+
   .rankings-sidebar {
     width: 100%;
     order: -1;
     position: static;
   }
-  
+
   .rankings-list {
     display: flex;
     gap: 0.5rem;
@@ -2532,7 +2528,7 @@ input[type="checkbox"]:disabled {
     overflow-x: auto;
     padding-bottom: 0.5rem;
   }
-  
+
   .ranking-item {
     min-width: 200px;
     margin-bottom: 0;
@@ -2543,52 +2539,52 @@ input[type="checkbox"]:disabled {
   .quiz-taking-page {
     padding: 0 15px;
   }
-  
+
   .quiz-container {
     padding: 1.5rem;
   }
-  
+
   .quiz-header h2 {
     font-size: 1.5rem;
   }
-  
+
   /* 响应式样式 - 继承统一样式 */
   .quiz-meta {
     gap: 1rem;
     font-size: 0.9rem;
   }
-  
+
   .quiz-meta--center {
     gap: 1rem;
     flex-direction: column;
     align-items: center;
   }
-  
+
   .question-text {
     font-size: 1.1rem;
   }
-  
+
   .option {
     padding: 1rem;
   }
-  
+
   .navigation-buttons {
     flex-direction: column;
     gap: 0.75rem;
   }
-  
+
   .navigation-buttons button {
     width: 100%;
   }
-  
+
   .rankings-sidebar {
     padding: 1rem;
   }
-  
+
   .rankings-list {
     flex-direction: column;
   }
-  
+
   .ranking-item {
     min-width: auto;
   }
@@ -2598,18 +2594,18 @@ input[type="checkbox"]:disabled {
   .quiz-container {
     padding: 1rem;
   }
-  
+
   .quiz-start-section,
   .quiz-result-section {
     padding: 2rem 1rem;
   }
-  
+
   .result-card {
     padding: 1.5rem;
     min-width: auto;
     width: 100%;
   }
-  
+
   .quiz-meta {
     flex-direction: column;
     gap: 0.5rem;

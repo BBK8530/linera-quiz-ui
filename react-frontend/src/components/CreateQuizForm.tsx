@@ -6,12 +6,11 @@ import { useNavigate } from 'react-router-dom';
 import { CREATE_QUIZ } from '../graphql/quizMutations';
 import type { QuestionParamsInput } from '../graphql/quizTypes';
 
-
 // Local interface to match form fields with backend types
 interface LocalQuestion
   extends Omit<QuestionParamsInput, 'correctOptions' | 'questionType'> {
   correct_options: number[];
-  question_type: 'single' | 'multiple';
+  question_type: 'radio' | 'checkbox';
 }
 
 const CreateQuizForm: React.FC = () => {
@@ -28,7 +27,7 @@ const CreateQuizForm: React.FC = () => {
       options: ['', '', '', ''],
       correct_options: [],
       points: 10,
-      question_type: 'single',
+      question_type: 'radio',
       id: '',
     },
   ]);
@@ -54,7 +53,7 @@ const CreateQuizForm: React.FC = () => {
         options: ['', '', '', ''],
         correct_options: [],
         points: 10,
-        question_type: 'single',
+        question_type: 'radio',
         id: '',
       },
     ]);
@@ -63,7 +62,7 @@ const CreateQuizForm: React.FC = () => {
   const handleQuestionChange = (
     index: number,
     field: keyof LocalQuestion,
-    value: string | number | number[] | 'single' | 'multiple',
+    value: string | number | number[] | 'radio' | 'checkbox',
   ) => {
     const updatedQuestions = [...questions];
     updatedQuestions[index] = { ...updatedQuestions[index], [field]: value };
@@ -111,7 +110,7 @@ const CreateQuizForm: React.FC = () => {
         options: ['', '', '', ''],
         correct_options: [],
         points: 10,
-        question_type: 'single',
+        question_type: 'radio',
         id: '',
       },
     ]);
@@ -132,7 +131,7 @@ const CreateQuizForm: React.FC = () => {
     const updatedQuestions = [...questions];
     const question = updatedQuestions[questionIndex];
 
-    if (question.question_type === 'single') {
+    if (question.question_type === 'radio') {
       // For single choice, only one correct answer
       updatedQuestions[questionIndex].correct_options = isChecked
         ? [optionIndex]
@@ -254,7 +253,7 @@ const CreateQuizForm: React.FC = () => {
       // 重置表单
       resetForm();
       // 跳转到测验列表页
-      navigate('/'); // 假设首页是测验列表页
+      navigate('/quizzes');
     } catch (err: unknown) {
       console.error('创建测验失败:', err);
       const errorMessage = err instanceof Error ? err.message : '未知错误';
@@ -468,10 +467,10 @@ const CreateQuizForm: React.FC = () => {
                     <input
                       type="radio"
                       name={`question-type-${index}`}
-                      value="single"
-                      checked={question.question_type === 'single'}
+                      value="radio"
+                      checked={question.question_type === 'radio'}
                       onChange={() =>
-                        handleQuestionChange(index, 'question_type', 'single')
+                        handleQuestionChange(index, 'question_type', 'radio')
                       }
                       disabled={loading}
                     />
@@ -481,10 +480,10 @@ const CreateQuizForm: React.FC = () => {
                     <input
                       type="radio"
                       name={`question-type-${index}`}
-                      value="multiple"
-                      checked={question.question_type === 'multiple'}
+                      value="checkbox"
+                      checked={question.question_type === 'checkbox'}
                       onChange={() =>
-                        handleQuestionChange(index, 'question_type', 'multiple')
+                        handleQuestionChange(index, 'question_type', 'checkbox')
                       }
                       disabled={loading}
                     />
@@ -522,7 +521,7 @@ const CreateQuizForm: React.FC = () => {
                 {question.options.map((option, optionIndex) => (
                   <div key={optionIndex} className="option-item">
                     <div className="option-control">
-                      {question.question_type === 'single' ? (
+                      {question.question_type === 'radio' ? (
                         <input
                           type="radio"
                           id={`option-${index}-${optionIndex}`}

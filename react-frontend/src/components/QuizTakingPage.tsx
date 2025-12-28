@@ -6,6 +6,7 @@ import useNotification from '../hooks/useNotification';
 import { GET_QUIZ_SET, GET_QUIZ_LEADERBOARD } from '../graphql/quizQueries';
 import { SUBMIT_ANSWERS } from '../graphql/quizMutations';
 import type { QuizSetView, LeaderboardEntry } from '../graphql/quizTypes';
+import { useUser } from '../contexts/UserContext';
 
 interface ExtendedQuizSetView extends QuizSetView {
   participantCount: number;
@@ -35,6 +36,7 @@ const QuizTakingPage: React.FC = () => {
   const [isQuizStarted, setIsQuizStarted] = useState(false);
   const [isQuizCompleted, setIsQuizCompleted] = useState(false);
   const [quizStartTime, setQuizStartTime] = useState<number>(0);
+  const { user } = useUser();
 
   // Fetch quiz rankings - 只有在获取到quiz后才调用
   const fetchQuizRankings = useCallback(async () => {
@@ -147,7 +149,9 @@ const QuizTakingPage: React.FC = () => {
             }
 
             // 只有成功获取quiz后才获取排行榜数据
-            fetchQuizRankings();
+            setTimeout(() => {
+              fetchQuizRankings();
+            }, 100);
           } catch (err) {
             console.error('Error parsing timestamps:', err);
             setErrorMessage('Invalid quiz time data');
@@ -215,19 +219,19 @@ const QuizTakingPage: React.FC = () => {
       // Calculate actual time taken in milliseconds
       const timeTaken =
         quizStartTime > 0 ? Math.floor(Date.now() - quizStartTime) : 0;
-
-      await queryApplication({
+      console.log(user);
+      const result = await queryApplication({
         query: mutation,
         variables: {
           field0: {
-            quizId: quiz.id.toString(),
+            quizId: quiz.id,
             answers: formattedAnswers,
             timeTaken: timeTaken,
-            nickname: primaryWallet?.address || 'Anonymous',
+            nickname: user?.nickname || primaryWallet?.address || 'Anonymous',
           },
         },
       });
-
+      console.log('提交答案结果:', result);
       setIsQuizCompleted(true);
 
       // Refresh rankings
@@ -288,6 +292,13 @@ const QuizTakingPage: React.FC = () => {
     fetchQuizDetails(); // 初始查询
   }, []); // Empty dependency array to ensure it only runs once
 
+  // 当quiz数据加载完成后自动获取排行榜
+  useEffect(() => {
+    if (quiz) {
+      fetchQuizRankings();
+    }
+  }, [quiz, fetchQuizRankings]);
+
   // Timer countdown for quiz duration
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
@@ -296,8 +307,6 @@ const QuizTakingPage: React.FC = () => {
       timer = setInterval(() => {
         setTimeRemaining(prevTime => prevTime - 1);
       }, 1000);
-    } else if (timeRemaining === 0 && isQuizStarted && !isQuizCompleted) {
-      handleQuizSubmit();
     }
 
     return () => {
@@ -607,9 +616,13 @@ const QuizTakingPage: React.FC = () => {
                 <span
                   className={`timer ${
                     timeRemaining < 60 ? 'timer-warning' : ''
-                  } ${timeRemaining < 30 ? 'timer-danger' : ''}`}
+                  } ${timeRemaining < 30 ? 'timer-danger' : ''} ${
+                    timeRemaining === 0 ? 'timer-expired' : ''
+                  }`}
                 >
-                  Time Remaining: {formatTime(timeRemaining)}
+                  {timeRemaining > 0
+                    ? `Time Remaining: ${formatTime(timeRemaining)}`
+                    : "Time's Up! Quiz has ended."}
                 </span>
               </div>
             </div>
@@ -734,6 +747,7 @@ const QuizTakingPage: React.FC = () => {
                         handleQuizSubmit();
                       }
                     }}
+                    disabled={timeRemaining === 0}
                   >
                     Submit Quiz
                   </button>

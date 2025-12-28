@@ -128,9 +128,10 @@ export class LineraAdapter {
     if (!this.application) throw new Error('Application not set');
 
     const queryString = JSON.stringify(query);
+    console.log('Linera query string:', queryString);
     const result = await this.application.query(queryString);
     const response = JSON.parse(result);
-
+    console.log('Linera query response:', response);
     // Check for errors in the response
     if (response.errors && response.errors.length > 0) {
       const errorMessages = response.errors

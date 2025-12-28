@@ -174,6 +174,7 @@ const QuizList: React.FC = () => {
 
   // 定义新区块事件处理函数
   const handleNewBlock = useCallback(() => {
+    console.log('New block received, query use');
     // 重新获取测验数据
     fetchQuizzes(true);
   }, [fetchQuizzes]);
