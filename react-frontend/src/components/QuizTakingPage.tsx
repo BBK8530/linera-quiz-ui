@@ -435,7 +435,7 @@ const QuizTakingPage: React.FC = () => {
         <div className="quiz-header">
           <h2>{quiz.title}</h2>
           <p className="quiz-description">{quiz.description}</p>
-          <div className="quiz-meta quiz-meta--center">
+          <div className="quiz-meta">
             <span>Creator: {quiz.creatorNickname}</span>
             <span>Questions: {quiz.questions.length}</span>
             {isQuizStarted && (

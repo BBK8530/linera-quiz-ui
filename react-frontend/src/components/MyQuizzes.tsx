@@ -342,11 +342,11 @@ const MyQuizzes: React.FC = () => {
             <div key={quiz.id} className="quiz-card">
               <h3>{quiz.title}</h3>
               <p className="quiz-description">{quiz.description}</p>
-              <div className="quiz-meta quiz-meta--list">
-                <span>
+              <div className="quiz-meta">
+                <span className="meta-item">
                   <strong>Questions:</strong> {quiz.questions.length}
                 </span>
-                <span>
+                <span className="meta-item">
                   <strong>Created at:</strong> {formatDate(quiz.createdAt)}
                 </span>
               </div>

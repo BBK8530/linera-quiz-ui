@@ -335,11 +335,11 @@ const QuizRankings: React.FC = () => {
       <div className="quiz-info">
         <h2>{quiz.title}</h2>
         <p className="quiz-description">{quiz.description}</p>
-        <div className="quiz-meta quiz-meta--rankings">
-          <span>
+        <div className="quiz-meta">
+          <span className="meta-item">
             <strong>Creator:</strong> {quiz.creatorNickname}
           </span>
-          <span>
+          <span className="meta-item">
             <strong>Questions:</strong> {quiz.questions.length}
           </span>
           <span className="meta-item">

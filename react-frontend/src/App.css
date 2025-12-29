@@ -368,45 +368,19 @@ button:disabled {
   line-height: 1.5;
 }
 
-/* 统一的 quiz-meta 样式系统 */
 .quiz-meta {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 1rem;
   font-size: 0.9rem;
   color: #4a5568;
-  align-items: center;
 }
 
-.quiz-meta span {
+.meta-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-/* 列表页面样式 - 垂直布局 */
-.quiz-meta--list {
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-/* 答题页面样式 - 水平居中布局 */
-.quiz-meta--center {
-  flex-direction: row;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 2rem;
-  color: #6b7280;
-  font-size: 0.95rem;
-}
-
-/* 排行榜页面样式 */
-.quiz-meta--rankings {
-  justify-content: center;
-  gap: 2rem;
-  flex-wrap: wrap;
-  color: #6b7280;
-  font-size: 0.95rem;
 }
 
 /* 状态标签 */
@@ -2149,7 +2123,20 @@ input[type="checkbox"]:disabled {
   line-height: 1.6;
 }
 
-/* 第二个 quiz-meta 定义已合并到统一样式系统中 */
+.quiz-meta {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+
+.quiz-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 
 .timer {
   color: #DE2A02;
@@ -2552,16 +2539,9 @@ input[type="checkbox"]:disabled {
     font-size: 1.5rem;
   }
   
-  /* 响应式样式 - 继承统一样式 */
   .quiz-meta {
     gap: 1rem;
     font-size: 0.9rem;
-  }
-  
-  .quiz-meta--center {
-    gap: 1rem;
-    flex-direction: column;
-    align-items: center;
   }
   
   .question-text {
