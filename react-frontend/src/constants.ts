@@ -1,3 +1,3 @@
 export const LINERA_RPC_URL = 'https://faucet.testnet-conway.linera.net/';
 export const APP_ID =
-  '4979a095584f58aae3ea6e61c66a3e305ef13113232a0bd5c3e5812abd7fe3f3';
+  'd216f8affeeb71d3eb850d7c26c100ca11a6f3e19bfdcb76d297bdabf8c5eab9';

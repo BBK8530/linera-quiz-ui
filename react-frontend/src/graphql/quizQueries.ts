@@ -158,8 +158,18 @@ export const IS_USER_PARTICIPATED = `
 import { gql } from '@apollo/client';
 
 export const GET_QUIZ_SETS_APOLLO = gql`
-  query GetQuizSets($limit: Int, $offset: Int, $sortBy: String, $sortDirection: SortDirection) {
-    quizSets(limit: $limit, offset: $offset, sortBy: $sortBy, sortDirection: $sortDirection) {
+  query GetQuizSets(
+    $limit: Int
+    $offset: Int
+    $sortBy: String
+    $sortDirection: SortDirection
+  ) {
+    quizSets(
+      limit: $limit
+      offset: $offset
+      sortBy: $sortBy
+      sortDirection: $sortDirection
+    ) {
       id
       title
       description
@@ -204,8 +214,20 @@ export const GET_QUIZ_SET_APOLLO = gql`
 `;
 
 export const GET_USER_ATTEMPTS_APOLLO = gql`
-  query GetUserAttempts($user: String!, $limit: Int, $offset: Int, $sortBy: String, $sortDirection: SortDirection) {
-    userAttempts(user: $user, limit: $limit, offset: $offset, sortBy: $sortBy, sortDirection: $sortDirection) {
+  query GetUserAttempts(
+    $user: String!
+    $limit: Int
+    $offset: Int
+    $sortBy: String
+    $sortDirection: SortDirection
+  ) {
+    userAttempts(
+      user: $user
+      limit: $limit
+      offset: $offset
+      sortBy: $sortBy
+      sortDirection: $sortDirection
+    ) {
       quizId
       attempt {
         quizId
@@ -248,8 +270,20 @@ export const GET_USER_PARTICIPATIONS_APOLLO = gql`
 `;
 
 export const GET_USER_CREATED_QUIZZES_APOLLO = gql`
-  query GetUserCreatedQuizzes($nickname: String!, $limit: Int, $offset: Int, $sortBy: String, $sortDirection: SortDirection) {
-    getUserCreatedQuizzes(nickname: $nickname, limit: $limit, offset: $offset, sortBy: $sortBy, sortDirection: $sortDirection) {
+  query GetUserCreatedQuizzes(
+    $nickname: String!
+    $limit: Int
+    $offset: Int
+    $sortBy: String
+    $sortDirection: SortDirection
+  ) {
+    getUserCreatedQuizzes(
+      nickname: $nickname
+      limit: $limit
+      offset: $offset
+      sortBy: $sortBy
+      sortDirection: $sortDirection
+    ) {
       id
       title
       description
@@ -265,8 +299,20 @@ export const GET_USER_CREATED_QUIZZES_APOLLO = gql`
 `;
 
 export const GET_USER_PARTICIPATED_QUIZZES_APOLLO = gql`
-  query GetUserParticipatedQuizzes($walletAddress: String!, $limit: Int, $offset: Int, $sortBy: String, $sortDirection: SortDirection) {
-    getUserParticipatedQuizzes(walletAddress: $walletAddress, limit: $limit, offset: $offset, sortBy: $sortBy, sortDirection: $sortDirection) {
+  query GetUserParticipatedQuizzes(
+    $walletAddress: String!
+    $limit: Int
+    $offset: Int
+    $sortBy: String
+    $sortDirection: SortDirection
+  ) {
+    getUserParticipatedQuizzes(
+      walletAddress: $walletAddress
+      limit: $limit
+      offset: $offset
+      sortBy: $sortBy
+      sortDirection: $sortDirection
+    ) {
       id
       title
       description
@@ -315,39 +361,7 @@ export const IS_USER_PARTICIPATED_APOLLO = gql`
 
 // 添加订阅查询
 export const QUIZ_EVENTS_SUBSCRIPTION_APOLLO = gql`
-  subscription {
-    quiz_events {
-      ... on QuizCreated {
-        id
-        title
-        description
-        creator
-        creatorNickname
-        questions {
-          id
-          text
-          options
-          points
-          type
-        }
-        startTime
-        endTime
-        createdAt
-        mode
-        startMode
-        isStarted
-        registeredUsers
-        participantCount
-      }
-      ... on AnswerSubmitted {
-        quizId
-        user
-        nickname
-        answers
-        score
-        timeTaken
-        completedAt
-      }
-    }
+  subscription Notifications($chainId: ChainId!) {
+    notifications(chainId: $chainId)
   }
 `;

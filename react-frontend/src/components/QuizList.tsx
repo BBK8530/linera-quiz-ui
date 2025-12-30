@@ -87,28 +87,9 @@ const QuizList: React.FC = () => {
 
   // 订阅测验事件
   useSubscription(QUIZ_EVENTS_SUBSCRIPTION_APOLLO, {
-    onData: ({ data }: { data?: any }) => {
-      if (data.data?.quiz_events) {
-        const event = data.data.quiz_events;
-        // 根据事件类型更新测验列表
-        if (event.__typename === 'QuizCreated') {
-          // 如果是新测验创建事件，重新获取测验列表
-          refetch();
-        } else if (event.__typename === 'AnswerSubmitted') {
-          // 如果是答案提交事件，更新相应测验的参与者数量
-          setAllQuizzes(prevQuizzes => {
-            return prevQuizzes.map(quiz => {
-              if (quiz.id === event.quizId) {
-                return {
-                  ...quiz,
-                  participantCount: (quiz.participantCount || 0) + 1,
-                };
-              }
-              return quiz;
-            });
-          });
-        }
-      }
+    variables: { chainId: import.meta.env.CHAIN_ID },
+    onData: ({ data }) => {
+      console.log('Subscription data:', data);
     },
     onError: (error: any) => {
       console.error('Subscription error:', error);

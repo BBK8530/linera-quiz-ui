@@ -15,6 +15,7 @@
     "@dynamic-labs/sdk-react-core": "^4.52.1",
     "@linera/client": "0.15.7",
     "graphql": "^16.12.0",
+    "graphql-ws": "^6.0.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-icons": "^5.5.0",

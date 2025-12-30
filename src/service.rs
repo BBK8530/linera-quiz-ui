@@ -497,9 +497,15 @@ struct SubscriptionRoot {
     state: Arc<QuizState>,
 }
 
+#[derive(async_graphql::Enum, Debug, Clone, PartialEq)]
+enum QuizEvent {
+    QuizCreated(QuizSetView),
+    AnswerSubmitted(UserAttemptView),
+}
+
 #[async_graphql::Subscription]
 impl SubscriptionRoot {
-    async fn quiz_events(&self) -> impl futures::Stream<Item = QuizEvent> {
+    async fn notifications(&self) -> impl futures::Stream<Item = QuizEvent> {
         let state = self.state.clone();
         futures::stream::unfold(0, move |last_index| {
             let state = state.clone();

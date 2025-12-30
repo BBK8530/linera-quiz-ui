@@ -1,6 +1,5 @@
-import { ApolloProvider } from '@apollo/client/react';
+import GraphQLProvider from './apollo/index.tsx';
 import { DynamicWalletProvider } from './providers/DynamicWalletProvider';
-import { client } from './apollo/index';
 import UserInfo from './components/UserInfo';
 import QuizList from './components/QuizList';
 
@@ -143,10 +142,20 @@ const Layout: React.FC = () => {
 };
 
 function App() {
+  // 从环境变量获取配置参数
+  const chainId = import.meta.env.VITE_CHAIN_ID || 'default-chain';
+  const applicationId = import.meta.env.VITE_APP_ID || 'default-app';
+  const port = import.meta.env.VITE_PORT || 8080;
+
   return (
     <BrowserRouter>
       <DynamicWalletProvider>
-        <ApolloProvider client={client}>
+        <GraphQLProvider
+          chainId={chainId}
+          applicationId={applicationId}
+          port={port}
+          host="128.140.73.28"
+        >
           <NotificationProvider>
             <ConnectionProvider>
               <UserProvider>
@@ -213,7 +222,7 @@ function App() {
               </UserProvider>
             </ConnectionProvider>
           </NotificationProvider>
-        </ApolloProvider>
+        </GraphQLProvider>
       </DynamicWalletProvider>
     </BrowserRouter>
   );
