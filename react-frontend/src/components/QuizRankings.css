@@ -1,0 +1,157 @@
+.quiz-rankings {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.rankings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.rankings-table-container {
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.rankings-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.rankings-table th,
+.rankings-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.rankings-table th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.rankings-table th:hover {
+  background-color: #f1f5f9;
+}
+
+.skeleton-text {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-text--header {
+  height: 44px;
+  width: 200px;
+}
+
+.skeleton-text--rank {
+  width: 40px;
+  height: 20px;
+}
+
+.skeleton-text--nickname {
+  width: 150px;
+  height: 20px;
+}
+
+.skeleton-text--score {
+  width: 100px;
+  height: 20px;
+}
+
+.skeleton-text--time {
+  width: 150px;
+  height: 20px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-row td {
+  padding: 12px 15px;
+}
+
+.error-container {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.error-message {
+  color: #e53e3e;
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+}
+
+.quiz-info {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.quiz-description {
+  color: #4a5568;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+.quiz-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.quiz-meta--rankings {
+  margin-bottom: 20px;
+}
+
+.meta-item {
+  display: inline-flex;
+}
+
+.action-button.primary {
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.action-button.primary:hover {
+  background-color: #2c5282;
+}
+
+@media (max-width: 768px) {
+  .quiz-rankings {
+    padding: 10px;
+  }
+
+  .rankings-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .quiz-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

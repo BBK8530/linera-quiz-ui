@@ -2,20 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useConnection } from '../contexts/ConnectionContext';
 import { useNavigate } from 'react-router-dom';
-import useNotification from '../hooks/useNotification';
-
-// 添加接口定义
-interface QuizSet {
-  id: string;
-  title: string;
-  description: string;
-  creatorNickname: string;
-  startTime: string;
-  endTime: string;
-  mode: string;
-  participantCount: number;
-  questions: { id: string }[];
-}
+import { GET_QUIZ_SETS } from '../graphql/quizQueries';
+import type { QuizSet } from '../graphql/quizTypes';
 
 const QuizList: React.FC = () => {
   const { primaryWallet } = useDynamicContext();
@@ -110,30 +98,18 @@ const QuizList: React.FC = () => {
             return;
           }
 
-          const query = `query GetQuizSets($limit: Int, $offset: Int) {
-          quizSets(limit: $limit, offset: $offset, sortBy: "created_at", sortDirection: DESC) {
-            id
-            title
-            description
-            creatorNickname
-            startTime
-            endTime
-            mode
-            participantCount
-            questions {
-              id
-            }
-          }
-        }`;
+          const variables = {
+            limit: pageSize,
+            offset: (currentPage - 1) * pageSize,
+            sortBy: 'createdAt',
+            sortDirection: 'DESC',
+          };
 
           const result = (await queryApplication({
-            query,
-            variables: {
-              limit: pageSize,
-              offset: (currentPage - 1) * pageSize,
-            },
+            query: GET_QUIZ_SETS,
+            variables,
           })) as { data?: { quizSets: QuizSet[] } };
-
+          console.log(result);
           // 再次检查钱包地址
           if (
             !primaryWallet?.address ||
@@ -198,6 +174,7 @@ const QuizList: React.FC = () => {
 
   // 定义新区块事件处理函数
   const handleNewBlock = useCallback(() => {
+    console.log('New block received, query use');
     // 重新获取测验数据
     fetchQuizzes(true);
   }, [fetchQuizzes]);
@@ -312,9 +289,9 @@ const QuizList: React.FC = () => {
             <div key={quiz.id} className="quiz-card">
               <div className="quiz-card-header">
                 <h3>{quiz.title}</h3>
-                <button 
+                <button
                   className="copy-link-icon"
-                  onClick={() => openQuizDetails(quiz.id)}
+                  onClick={() => openQuizDetails(quiz.id.toString())}
                   title="查看测验详情"
                 >
                   📝
@@ -356,7 +333,7 @@ const QuizList: React.FC = () => {
               </div>
               <div className="quiz-actions">
                 {/* 根据测验状态显示不同的操作按钮 */}
-                
+
                 {/* 去做题按钮：只在测验进行中时显示 */}
                 {new Date() >= new Date(Number(quiz.startTime) / 1000) &&
                   new Date() <= new Date(Number(quiz.endTime) / 1000) && (

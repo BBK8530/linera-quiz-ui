@@ -168,7 +168,7 @@ impl QueryRoot {
                     let attempt_view = UserAttemptView {
                         quiz_id: attempt.quiz_id,
                         user: attempt.user,
-                        nickname: "".to_string(), // 暂时使用空字符串，后续需要从用户信息中获取
+                        nickname: attempt.nickname,
                         answers: attempt.answers,
                         score: attempt.score,
                         time_taken: attempt.time_taken,
@@ -220,43 +220,6 @@ impl QueryRoot {
         attempts[start..end].to_vec()
     }
 
-    async fn leaderboard(&self) -> Vec<UserAttemptView> {
-        let mut entries = std::collections::HashMap::new();
-
-        let _ = self
-            .state
-            .user_attempts
-            .for_each_index_value(|(_quiz_id, user), attempt| {
-                let attempt = attempt.into_owned();
-                let entry = entries.entry(user).or_insert((0, u64::MAX));
-                if entry.0 < u32::MAX - attempt.score {
-                    entry.0 += attempt.score;
-                } else {
-                    entry.0 = u32::MAX;
-                }
-                if attempt.time_taken < entry.1 {
-                    entry.1 = attempt.time_taken;
-                }
-                Ok(())
-            })
-            .await;
-
-        let mut leaderboard: Vec<_> = entries
-            .into_iter()
-            .map(|(user, (score, time_taken))| UserAttemptView {
-                quiz_id: 0,
-                user,
-                nickname: "".to_string(), // 暂时使用空字符串，后续需要从用户信息中获取
-                answers: Vec::new(),
-                score,
-                time_taken,
-                completed_at: self.runtime.system_time().micros().to_string(),
-            })
-            .collect();
-        leaderboard.sort_by(|a, b| b.score.cmp(&a.score).then(a.time_taken.cmp(&b.time_taken)));
-        leaderboard
-    }
-
     async fn quiz_leaderboard(&self, quiz_id: u64) -> Vec<UserAttemptView> {
         let mut entries = std::collections::HashMap::new();
 
@@ -266,13 +229,17 @@ impl QueryRoot {
             .for_each_index_value(|(q_id, user), attempt| {
                 if q_id == quiz_id {
                     let attempt = attempt.into_owned();
-                    let entry = entries.entry(user).or_insert((0, u64::MAX, String::new()));
+                    let entry =
+                        entries
+                            .entry(user)
+                            .or_insert((0, u64::MAX, String::new(), String::new()));
                     if attempt.score > entry.0
                         || (attempt.score == entry.0 && attempt.time_taken < entry.1)
                     {
                         entry.0 = attempt.score;
                         entry.1 = attempt.time_taken;
                         entry.2 = attempt.completed_at.micros().to_string();
+                        entry.3 = attempt.nickname.clone();
                     }
                 }
                 Ok(())
@@ -282,10 +249,10 @@ impl QueryRoot {
         let mut leaderboard: Vec<_> = entries
             .into_iter()
             .map(
-                |(user, (score, time_taken, completed_at))| UserAttemptView {
+                |(user, (score, time_taken, completed_at, nickname))| UserAttemptView {
                     quiz_id,
                     user,
-                    nickname: "".to_string(), // 暂时使用空字符串，后续需要从用户信息中获取
+                    nickname,
                     answers: Vec::new(),
                     score,
                     time_taken,

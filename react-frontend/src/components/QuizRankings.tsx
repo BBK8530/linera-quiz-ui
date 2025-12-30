@@ -1,29 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import './QuizRankings.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useConnection } from '../contexts/ConnectionContext';
+import { GET_QUIZ_SET, GET_QUIZ_LEADERBOARD } from '../graphql/quizQueries';
+import type { LeaderboardEntry, QuizSetView } from '../graphql/quizTypes';
 
-interface Quiz {
-  id: string;
-  title: string;
-  description: string;
-  duration: number;
-  creatorNickname: string;
-  isStarted: boolean;
-  isEnded: boolean;
-  registeredCount: number;
-  questions: Array<{
-    id: string;
-    text: string;
-    options: string[];
-    correctAnswer: string;
-  }>;
-  createdAt: string;
-}
-
-interface Ranking {
-  nickname: string;
-  score: number;
-  completedAt: string;
+// Local interface to match component needs
+interface LocalRanking extends LeaderboardEntry {
   rank: number;
 }
 
@@ -32,15 +15,12 @@ const QuizRankings: React.FC = () => {
   const navigate = useNavigate();
   const { queryApplication, onNewBlock, offNewBlock } = useConnection();
 
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [rankings, setRankings] = useState<Ranking[]>([]);
+  const [quiz, setQuiz] = useState<QuizSetView | null>(null);
+  const [rankings, setRankings] = useState<LocalRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState<'score' | 'completedAt' | 'nickname'>(
-    'score',
-  );
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  // Remove sort state variables
 
   const pageSize = 10;
 
@@ -50,31 +30,9 @@ const QuizRankings: React.FC = () => {
 
     try {
       // Fetch quiz details
-      const quizQuery = `
-        query GetQuiz($quizId: String!) {
-          quiz(id: $quizId) {
-            id
-            title
-            description
-            duration
-            creatorNickname
-            isStarted
-            isEnded
-            registeredCount
-            questions {
-              id
-              text
-              options
-              correctAnswer
-            }
-            createdAt
-          }
-        }
-      `;
-
       const quizResult = await queryApplication({
-        query: quizQuery,
-        variables: { quizId },
+        query: GET_QUIZ_SET,
+        variables: { quizId: parseInt(quizId) },
       });
 
       if (
@@ -83,9 +41,9 @@ const QuizRankings: React.FC = () => {
         'data' in quizResult &&
         quizResult.data &&
         typeof quizResult.data === 'object' &&
-        'quiz' in quizResult.data
+        'quizSet' in quizResult.data
       ) {
-        setQuiz(quizResult.data.quiz as Quiz);
+        setQuiz(quizResult.data.quizSet as QuizSetView);
       } else {
         setError('Quiz not found');
       }
@@ -100,20 +58,9 @@ const QuizRankings: React.FC = () => {
     if (!quizId) return;
 
     try {
-      const rankingsQuery = `
-        query GetQuizRankings($quizId: String!) {
-          quizRankings(quizId: $quizId) {
-            nickname
-            score
-            completedAt
-            rank
-          }
-        }
-      `;
-
       const rankingsResult = await queryApplication({
-        query: rankingsQuery,
-        variables: { quizId },
+        query: GET_QUIZ_LEADERBOARD,
+        variables: { quizId: parseInt(quizId) },
       });
 
       if (
@@ -122,9 +69,9 @@ const QuizRankings: React.FC = () => {
         'data' in rankingsResult &&
         rankingsResult.data &&
         typeof rankingsResult.data === 'object' &&
-        'quizRankings' in rankingsResult.data
+        'quizLeaderboard' in rankingsResult.data
       ) {
-        setRankings(rankingsResult.data.quizRankings as Ranking[]);
+        setRankings(rankingsResult.data.quizLeaderboard as LocalRanking[]);
       }
     } catch (err) {
       console.error('Failed to fetch quiz rankings:', err);
@@ -157,40 +104,12 @@ const QuizRankings: React.FC = () => {
     fetchQuizRankings();
   }, [fetchQuizDetails, fetchQuizRankings]);
 
-  // Sort rankings
-  const sortedRankings = [...rankings].sort((a, b) => {
-    let comparison = 0;
-
-    switch (sortBy) {
-      case 'score':
-        comparison = a.score - b.score;
-        break;
-      case 'completedAt':
-        comparison = Number(a.completedAt) - Number(b.completedAt);
-        break;
-      case 'nickname':
-        comparison = a.nickname.localeCompare(b.nickname);
-        break;
-      default:
-        comparison = a.rank - b.rank;
-    }
-
-    return sortOrder === 'asc' ? comparison : -comparison;
-  });
-
-  // Handle sort
-  const handleSort = (field: 'score' | 'completedAt' | 'nickname') => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortOrder('desc');
-    }
-  };
-
   // Pagination
-  const totalPages = Math.ceil(sortedRankings.length / pageSize);
-  const paginatedRankings = sortedRankings.slice(
+  const totalPages = Math.ceil(rankings.length / pageSize);
+  // Remove sort function
+
+  // Sort rankings - removed
+  const paginatedRankings = rankings.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
@@ -217,40 +136,21 @@ const QuizRankings: React.FC = () => {
   if (loading) {
     return (
       <div className="quiz-rankings">
-        <div className="rankings-header">
-          <h2>Quiz Rankings</h2>
-          <div
-            className="skeleton-text"
-            style={{ height: '44px', width: '200px' }}
-          ></div>
-        </div>
         <div className="rankings-table-container">
           <table className="rankings-table">
             <thead>
               <tr>
                 <th className="rank-column">
-                  <div
-                    className="skeleton-text"
-                    style={{ width: '40px', height: '20px' }}
-                  ></div>
+                  <div className="skeleton-text skeleton-text--rank"></div>
                 </th>
                 <th className="nickname-column">
-                  <div
-                    className="skeleton-text"
-                    style={{ width: '150px', height: '20px' }}
-                  ></div>
+                  <div className="skeleton-text skeleton-text--nickname"></div>
                 </th>
                 <th className="score-column">
-                  <div
-                    className="skeleton-text"
-                    style={{ width: '100px', height: '20px' }}
-                  ></div>
+                  <div className="skeleton-text skeleton-text--score"></div>
                 </th>
                 <th className="time-column">
-                  <div
-                    className="skeleton-text"
-                    style={{ width: '150px', height: '20px' }}
-                  ></div>
+                  <div className="skeleton-text skeleton-text--time"></div>
                 </th>
               </tr>
             </thead>
@@ -260,28 +160,16 @@ const QuizRankings: React.FC = () => {
                 .map((_, i) => (
                   <tr key={i} className="skeleton-row">
                     <td>
-                      <div
-                        className="skeleton-text"
-                        style={{ width: '40px', height: '20px' }}
-                      ></div>
+                      <div className="skeleton-text skeleton-text--rank"></div>
                     </td>
                     <td>
-                      <div
-                        className="skeleton-text"
-                        style={{ width: '150px', height: '20px' }}
-                      ></div>
+                      <div className="skeleton-text skeleton-text--nickname"></div>
                     </td>
                     <td>
-                      <div
-                        className="skeleton-text"
-                        style={{ width: '100px', height: '20px' }}
-                      ></div>
+                      <div className="skeleton-text skeleton-text--score"></div>
                     </td>
                     <td>
-                      <div
-                        className="skeleton-text"
-                        style={{ width: '150px', height: '20px' }}
-                      ></div>
+                      <div className="skeleton-text skeleton-text--time"></div>
                     </td>
                   </tr>
                 ))}
@@ -295,14 +183,11 @@ const QuizRankings: React.FC = () => {
   if (error) {
     return (
       <div className="quiz-rankings">
-        <div className="rankings-header">
-          <h2>Quiz Rankings</h2>
-        </div>
         <div className="error-container">
           <p className="error-message">{error}</p>
           <button
             className="action-button primary"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/quizzes')}
           >
             Back to Quizzes
           </button>
@@ -321,7 +206,7 @@ const QuizRankings: React.FC = () => {
           <p className="error-message">Quiz not found</p>
           <button
             className="action-button primary"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/quizzes')}
           >
             Back to Quizzes
           </button>
@@ -333,52 +218,41 @@ const QuizRankings: React.FC = () => {
   return (
     <div className="quiz-rankings">
       <div className="quiz-info">
-        <h2>{quiz.title}</h2>
-        <p className="quiz-description">{quiz.description}</p>
-        <div className="quiz-meta">
-          <span className="meta-item">
-            <strong>Creator:</strong> {quiz.creatorNickname}
-          </span>
-          <span className="meta-item">
-            <strong>Questions:</strong> {quiz.questions.length}
-          </span>
-          <span className="meta-item">
-            <strong>Status:</strong>{' '}
-            {quiz.isEnded ? '已结束' : quiz.isStarted ? '进行中' : '待开始'}
-          </span>
-        </div>
-        <button
-          className="action-button primary"
-          onClick={() => navigate(`/quiz/${quiz.id}`)}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+          }}
         >
-          Take This Quiz
-        </button>
-      </div>
-
-      <div className="rankings-header">
-        <h3>Rankings</h3>
-        <div className="sort-controls">
-          <label>Sort by: </label>
-          <select
-            className="sort-select"
-            value={sortBy}
-            onChange={e =>
-              handleSort(e.target.value as 'score' | 'completedAt' | 'nickname')
-            }
-          >
-            <option value="score">Score</option>
-            <option value="completedAt">Completed At</option>
-            <option value="nickname">Nickname</option>
-          </select>
+          <div>
+            <h2>{quiz.title}</h2>
+            <p className="quiz-description">{quiz.description}</p>
+            <div className="quiz-meta quiz-meta--rankings">
+              <span>
+                <strong>Creator:</strong> {quiz.creatorNickname}
+              </span>
+              <span>
+                <strong>Questions:</strong> {quiz.questions.length}
+              </span>
+              <span className="meta-item">
+                <strong>Status:</strong>
+                {new Date() > new Date(Number(quiz.endTime) / 1000)
+                  ? '已结束'
+                  : quiz.isStarted
+                  ? '进行中'
+                  : '待开始'}
+              </span>
+            </div>
+          </div>
           <button
-            className="sort-order-button"
-            onClick={() => handleSort(sortBy)}
+            className="action-button primary"
+            onClick={() => navigate(`/quiz/${quiz.id}`)}
           >
-            {sortOrder === 'asc' ? '↑' : '↓'}
+            Take This Quiz
           </button>
         </div>
       </div>
-
       <div className="rankings-table-container">
         {rankings.length > 0 ? (
           <table className="rankings-table">
@@ -395,7 +269,7 @@ const QuizRankings: React.FC = () => {
                 <tr key={index} className="ranking-row">
                   <td className="rank-column">
                     <span className={`rank-badge rank-${ranking.rank}`}>
-                      #{ranking.rank}
+                      {index + 1}
                     </span>
                   </td>
                   <td className="nickname-column">

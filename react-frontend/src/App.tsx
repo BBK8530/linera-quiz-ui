@@ -6,7 +6,6 @@ import QuizList from './components/QuizList';
 
 import CreateQuizForm from './components/CreateQuizForm';
 import QuizTakingPage from './components/QuizTakingPage';
-import GlobalRankings from './components/GlobalRankings';
 import QuizRankings from './components/QuizRankings';
 import WalletConnectionScreen from './components/WalletConnectionScreen';
 import { BrowserRouter, Routes, Route, Link, Outlet } from 'react-router-dom';
@@ -15,6 +14,7 @@ import NotificationProvider from './components/NotificationContext';
 import NotificationContainer from './components/NotificationContainer';
 import ConnectionProvider from './contexts/ConnectionContext';
 import { useConnection } from './contexts/ConnectionContext';
+import { UserProvider } from './contexts/UserContext';
 import './App.css';
 
 // 创建Header组件
@@ -27,18 +27,17 @@ const Header: React.FC = () => {
         <Link to="/" className="logo-link">
           <h1>Quiz Challenge</h1>
         </Link>
-        <nav className="main-nav">
-          <Link to="/quizzes" className="nav-link">
-            Quizzes
-          </Link>
-          <Link to="/create" className="nav-link">
-            Create
-          </Link>
-          <Link to="/rankings" className="nav-link">
-            Leaderboard
-          </Link>
-        </nav>
-        {user && primaryWallet && <UserInfo />}
+        <div className="header-right">
+          <nav className="main-nav">
+            <Link to="/quizzes" className="nav-link">
+              Quizzes
+            </Link>
+            <Link to="/create" className="nav-link">
+              Create
+            </Link>
+          </nav>
+          {user && primaryWallet && <UserInfo />}
+        </div>
       </div>
     </header>
   );
@@ -58,16 +57,18 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
 
   // 如果正在连接Linera，显示加载屏幕
   if (isConnecting) {
-    return <WalletConnectionScreen isLoading={true} loadingText="正在连接到 钱包 ..." />;
+    return (
+      <WalletConnectionScreen
+        isLoading={true}
+        loadingText="正在连接到 钱包 ..."
+      />
+    );
   }
 
   // 如果连接失败且未连接到Linera，显示连接错误
   if (!isLineraConnected && connectionError) {
     return (
-      <WalletConnectionScreen 
-        showError={true}
-        errorText={connectionError}
-      />
+      <WalletConnectionScreen showError={true} errorText={connectionError} />
     );
   }
 
@@ -100,6 +101,9 @@ const Layout: React.FC = () => {
   return (
     <div className="app-container">
       <Header />
+      <div className="global-banner">
+        提示：为确保数据准确性，系统需要同步最新区块信息，当前显示的数据可能存在轻微延迟。
+      </div>
       <main className="app-main">
         <Outlet />
       </main>
@@ -145,79 +149,68 @@ function App() {
         <ApolloProvider client={client}>
           <NotificationProvider>
             <ConnectionProvider>
-              <Routes>
-                <Route path="/" element={<Layout />}>
-                  {/* 根路径显示首页内容 */}
-                  <Route index element={<HomePage />} />
-                  {/* 为QuizList添加专用路由 */}
-                  <Route
-                    path="/quizzes"
-                    element={
-                      <ProtectedRoute>
-                        <div className="content-wrapper">
-                          <div className="content-header">
-                            <h2>Quizzes</h2>
+              <UserProvider>
+                <Routes>
+                  <Route path="/" element={<Layout />}>
+                    {/* 根路径显示首页内容 */}
+                    <Route index element={<HomePage />} />
+                    {/* 为QuizList添加专用路由 */}
+                    <Route
+                      path="/quizzes"
+                      element={
+                        <ProtectedRoute>
+                          <div className="content-wrapper">
+                            <div className="content-header">
+                              <h2>Quizzes</h2>
+                            </div>
+                            <QuizList />
                           </div>
-                          <QuizList />
-                        </div>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/create"
-                    element={
-                      <ProtectedRoute>
-                        <div className="content-wrapper">
-                          <div className="content-header">
-                            <h2>Create Quiz</h2>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/create"
+                      element={
+                        <ProtectedRoute>
+                          <div className="content-wrapper">
+                            <div className="content-header">
+                              <h2>Create Quiz</h2>
+                            </div>
+                            <CreateQuizForm />
                           </div>
-                          <CreateQuizForm />
-                        </div>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/quiz/:quizId"
-                    element={
-                      <ProtectedRoute>
-                        <div className="content-wrapper">
-                          <div className="content-header">
-                            <h2>Take Quiz</h2>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/quiz/:quizId"
+                      element={
+                        <ProtectedRoute>
+                          <div className="content-wrapper">
+                            <div className="content-header">
+                              <h2>Take Quiz</h2>
+                            </div>
+                            <QuizTakingPage />
                           </div>
-                          <QuizTakingPage />
-                        </div>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/quiz-rank/:quizId"
-                    element={
-                      <ProtectedRoute>
-                        <div className="content-wrapper">
-                          <div className="content-header">
-                            <h2>Quiz Rankings</h2>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/quiz-rank/:quizId"
+                      element={
+                        <ProtectedRoute>
+                          <div className="content-wrapper">
+                            <div className="content-header">
+                              <h2>Quiz Rankings</h2>
+                            </div>
+                            <QuizRankings />
                           </div>
-                          <QuizRankings />
-                        </div>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/rankings"
-                    element={
-                      <ProtectedRoute>
-                        <div className="content-wrapper">
-                          <div className="content-header">
-                            <h2>Leadboard</h2>
-                          </div>
-                          <GlobalRankings />
-                        </div>
-                      </ProtectedRoute>
-                    }
-                  />
-                </Route>
-              </Routes>
-              <NotificationContainer />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Route>
+                </Routes>
+                <NotificationContainer />
+              </UserProvider>
             </ConnectionProvider>
           </NotificationProvider>
         </ApolloProvider>
