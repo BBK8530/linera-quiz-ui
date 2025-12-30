@@ -5,7 +5,7 @@
 
 mod state;
 
-use linera_sdk::linera_base_types::TimeDelta;
+use linera_sdk::linera_base_types::{TimeDelta, ChainId};
 use linera_sdk::{
     linera_base_types::WithContractAbi,
     views::{RootView, View},
@@ -14,7 +14,7 @@ use linera_sdk::{
 use log::{debug, error, info};
 
 use crate::state::{Question, QuizMode, QuizSet, QuizStartMode, QuizState, User, UserAttempt};
-use quiz::{CreateQuizParams, LeaderboardEntry, Operation, SetNicknameParams, SubmitAnswersParams};
+use quiz::{CreateQuizParams, LeaderboardEntry, Message, Operation, SetNicknameParams, SubmitAnswersParams};
 
 pub struct QuizContract {
     state: QuizState,
@@ -28,7 +28,7 @@ impl WithContractAbi for QuizContract {
 }
 
 impl Contract for QuizContract {
-    type Message = ();
+    type Message = Message;
     type InstantiationArgument = ();
     type Parameters = ();
     type EventValue = ();
@@ -48,13 +48,20 @@ impl Contract for QuizContract {
         }
     }
 
-    async fn execute_operation(&mut self, operation: Operation) -> Self::Response {
-        match operation {
-            Operation::SetNickname(params) => self.set_nickname(params).await,
-            Operation::CreateQuiz(params) => self.create_quiz(params).await,
-            Operation::SubmitAnswers(params) => self.submit_answers(params).await,
-            Operation::StartQuiz(quiz_id) => self.start_quiz(quiz_id).await,
-            Operation::RegisterForQuiz(quiz_id) => self.register_for_quiz(quiz_id).await,
+    async fn execute_operation(&mut self, operation: Operation) -> Result<(), quiz::QuizError> {
+        // 检查当前链是否是主链
+        if self.is_main_chain() {
+            // 主链：直接处理操作
+            match operation {
+                Operation::SetNickname(params) => self.set_nickname(params).await,
+                Operation::CreateQuiz(params) => self.create_quiz(params).await,
+                Operation::SubmitAnswers(params) => self.submit_answers(params).await,
+                Operation::StartQuiz(quiz_id) => self.start_quiz(quiz_id).await,
+                Operation::RegisterForQuiz(quiz_id) => self.register_for_quiz(quiz_id).await,
+            }
+        } else {
+            // 子链：转发到主链
+            self.forward_to_main_chain(operation).await
         }
     }
 
@@ -62,12 +69,153 @@ impl Contract for QuizContract {
         self.state.save().await.expect("Failed to save state");
     }
 
-    async fn execute_message(&mut self, _message: ()) {
-        // Not implemented yet
+    async fn execute_message(&mut self, message: Message) {
+        match message {
+            Message::SetNickname { from_chain_id, params } => {
+                self.handle_cross_chain_set_nickname(from_chain_id, params).await
+            }
+            Message::CreateQuiz { from_chain_id, params } => {
+                self.handle_cross_chain_create_quiz(from_chain_id, params).await
+            }
+            Message::SubmitAnswers { from_chain_id, params } => {
+                self.handle_cross_chain_submit_answers(from_chain_id, params).await
+            }
+            Message::StartQuiz { from_chain_id, quiz_id } => {
+                self.handle_cross_chain_start_quiz(from_chain_id, quiz_id).await
+            }
+            Message::RegisterForQuiz { from_chain_id, quiz_id } => {
+                self.handle_cross_chain_register_for_quiz(from_chain_id, quiz_id).await
+            }
+        }
     }
 }
 
 impl QuizContract {
+    /// 获取主链的 ChainID
+    fn main_chain_id(&mut self) -> ChainId {
+        self.runtime.application_creator_chain_id()
+    }
+
+    /// 检查当前链是否是主链
+    fn is_main_chain(&mut self) -> bool {
+        let current_chain_id = self.runtime.chain_id();
+        let main_chain_id = self.main_chain_id();
+        current_chain_id == main_chain_id
+    }
+
+    /// 将操作转发到主链
+    async fn forward_to_main_chain(&mut self, operation: Operation) -> Result<(), quiz::QuizError> {
+        let main_chain_id = self.main_chain_id();
+        let current_chain_id = self.runtime.chain_id();
+
+        let message = match operation {
+            Operation::SetNickname(params) => Message::SetNickname {
+                from_chain_id: current_chain_id,
+                params,
+            },
+            Operation::CreateQuiz(params) => Message::CreateQuiz {
+                from_chain_id: current_chain_id,
+                params,
+            },
+            Operation::SubmitAnswers(params) => Message::SubmitAnswers {
+                from_chain_id: current_chain_id,
+                params,
+            },
+            Operation::StartQuiz(quiz_id) => Message::StartQuiz {
+                from_chain_id: current_chain_id,
+                quiz_id,
+            },
+            Operation::RegisterForQuiz(quiz_id) => Message::RegisterForQuiz {
+                from_chain_id: current_chain_id,
+                quiz_id,
+            },
+        };
+
+        // 发送跨链消息
+        self.runtime.send_message(main_chain_id, message);
+        
+        // 跨链操作成功返回
+        Ok(())
+    }
+
+    /// 处理跨链设置昵称
+    async fn handle_cross_chain_set_nickname(
+        &mut self,
+        from_chain_id: ChainId,
+        params: SetNicknameParams,
+    ) {
+        let nickname = params.nickname.clone();
+        info!(
+            "处理来自链 {} 的跨链设置昵称请求: {}",
+            from_chain_id, nickname
+        );
+
+        // 在主链上直接执行设置昵称操作
+        let _ = self.set_nickname(params).await;
+    }
+
+    /// 处理跨链创建测验
+    async fn handle_cross_chain_create_quiz(
+        &mut self,
+        from_chain_id: ChainId,
+        params: CreateQuizParams,
+    ) {
+        let title = params.title.clone();
+        info!(
+            "处理来自链 {} 的跨链创建测验请求: {}",
+            from_chain_id, title
+        );
+
+        // 在主链上直接执行创建测验操作
+        let _ = self.create_quiz(params).await;
+    }
+
+    /// 处理跨链提交答案
+    async fn handle_cross_chain_submit_answers(
+        &mut self,
+        from_chain_id: ChainId,
+        params: SubmitAnswersParams,
+    ) {
+        let quiz_id = params.quiz_id;
+        info!(
+            "处理来自链 {} 的跨链提交答案请求，测验ID: {}",
+            from_chain_id, quiz_id
+        );
+
+        // 在主链上直接执行提交答案操作
+        let _ = self.submit_answers(params).await;
+    }
+
+    /// 处理跨链开始测验
+    async fn handle_cross_chain_start_quiz(
+        &mut self,
+        from_chain_id: ChainId,
+        quiz_id: u64,
+    ) {
+        info!(
+            "处理来自链 {} 的跨链开始测验请求，测验ID: {}",
+            from_chain_id, quiz_id
+        );
+
+        // 在主链上直接执行开始测验操作
+        let _ = self.start_quiz(quiz_id).await;
+    }
+
+    /// 处理跨链报名测验
+    async fn handle_cross_chain_register_for_quiz(
+        &mut self,
+        from_chain_id: ChainId,
+        quiz_id: u64,
+    ) {
+        info!(
+            "处理来自链 {} 的跨链报名测验请求，测验ID: {}",
+            from_chain_id, quiz_id
+        );
+
+        // 在主链上直接执行报名测验操作
+        let _ = self.register_for_quiz(quiz_id).await;
+    }
+
     async fn set_nickname(&mut self, params: SetNicknameParams) -> Result<(), quiz::QuizError> {
         let current_time = self.runtime.system_time();
         let wallet_address = self
@@ -664,4 +812,6 @@ impl QuizContract {
             .map_err(|_| quiz::QuizError::InternalError)?;
         Ok(())
     }
+
+
 }

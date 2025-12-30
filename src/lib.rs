@@ -5,7 +5,7 @@
 
 use async_graphql::{Enum, InputObject, SimpleObject};
 use linera_sdk::graphql::GraphQLMutationRoot;
-use linera_sdk::linera_base_types::{ContractAbi, ServiceAbi};
+use linera_sdk::linera_base_types::{ContractAbi, ServiceAbi, ChainId};
 use serde::{Deserialize, Serialize};
 
 /// Quiz错误类型枚举
@@ -158,6 +158,36 @@ pub enum Operation {
     StartQuiz(u64),
     /// 报名参与Quiz
     RegisterForQuiz(u64),
+}
+
+/// 跨链消息类型
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Message {
+    /// 设置昵称跨链消息
+    SetNickname {
+        from_chain_id: ChainId,
+        params: SetNicknameParams,
+    },
+    /// 创建Quiz跨链消息
+    CreateQuiz {
+        from_chain_id: ChainId,
+        params: CreateQuizParams,
+    },
+    /// 提交答案跨链消息
+    SubmitAnswers {
+        from_chain_id: ChainId,
+        params: SubmitAnswersParams,
+    },
+    /// 开始Quiz跨链消息
+    StartQuiz {
+        from_chain_id: ChainId,
+        quiz_id: u64,
+    },
+    /// 报名Quiz跨链消息
+    RegisterForQuiz {
+        from_chain_id: ChainId,
+        quiz_id: u64,
+    },
 }
 
 /// 应用支持的查询
