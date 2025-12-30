@@ -3,9 +3,9 @@
 
 /*! ABI of the Quiz Application */
 
-use async_graphql::{Enum, InputObject, SimpleObject};
+use async_graphql::{Enum, InputObject, SimpleObject, Union};
 use linera_sdk::graphql::GraphQLMutationRoot;
-use linera_sdk::linera_base_types::{ContractAbi, ServiceAbi, ChainId};
+use linera_sdk::linera_base_types::{ChainId, ContractAbi, ServiceAbi};
 use serde::{Deserialize, Serialize};
 
 /// Quiz错误类型枚举
@@ -220,7 +220,7 @@ pub struct UserView {
 }
 
 /// 用户答题尝试视图
-#[derive(Debug, Serialize, Deserialize, SimpleObject, Clone)]
+#[derive(Debug, Serialize, Deserialize, SimpleObject, Clone, PartialEq, Eq)]
 pub struct UserAttemptView {
     pub quiz_id: u64,
     pub user: String,     // 钱包地址
@@ -239,7 +239,7 @@ pub struct QuizAttempt {
 }
 
 /// Quiz集合视图
-#[derive(Debug, Serialize, Deserialize, SimpleObject, Clone)]
+#[derive(Debug, Serialize, Deserialize, SimpleObject, Clone, PartialEq, Eq)]
 pub struct QuizSetView {
     pub id: u64,
     pub title: String,
@@ -258,7 +258,7 @@ pub struct QuizSetView {
 }
 
 /// 问题视图
-#[derive(Debug, Serialize, Deserialize, SimpleObject, Clone)]
+#[derive(Debug, Serialize, Deserialize, SimpleObject, Clone, PartialEq, Eq)]
 pub struct QuestionView {
     pub id: String,
     pub text: String,
@@ -267,6 +267,15 @@ pub struct QuestionView {
     #[serde(rename = "type")]
     #[graphql(name = "type")]
     pub question_type: String,
+}
+
+/// 应用事件类型
+#[derive(Debug, Serialize, Deserialize, Union, Clone, PartialEq, Eq)]
+pub enum QuizEvent {
+    /// 新测验创建事件
+    QuizCreated(QuizSetView),
+    /// 新答案提交事件
+    AnswerSubmitted(UserAttemptView),
 }
 
 /// 查询响应

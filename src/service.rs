@@ -1,12 +1,14 @@
 #![cfg_attr(target_arch = "wasm32", no_main)]
 
-use async_graphql::{EmptySubscription, Request, Response, Schema};
+use async_graphql::{Request, Response, Schema};
 use linera_sdk::graphql::GraphQLMutationRoot;
 use linera_sdk::linera_base_types::WithServiceAbi;
 use linera_sdk::views::View;
 use linera_sdk::{Service, ServiceRuntime};
-use quiz::state::QuizState;
-use quiz::{Operation, QuestionView, QuizAttempt, QuizSetView, UserAttemptView, UserView};
+use quiz::state::{QuizEvent as InternalQuizEvent, QuizState};
+use quiz::{
+    Operation, QuestionView, QuizAttempt, QuizEvent, QuizSetView, UserAttemptView, UserView,
+};
 use std::sync::Arc;
 
 linera_sdk::service!(QuizService);
@@ -18,7 +20,6 @@ pub struct QuizService {
 
 struct QueryRoot {
     state: Arc<QuizState>,
-    runtime: Arc<ServiceRuntime<QuizService>>,
 }
 
 #[async_graphql::Object]
@@ -492,6 +493,106 @@ impl QueryRoot {
     }
 }
 
+struct SubscriptionRoot {
+    state: Arc<QuizState>,
+}
+
+#[async_graphql::Subscription]
+impl SubscriptionRoot {
+    async fn quiz_events(&self) -> impl futures::Stream<Item = QuizEvent> {
+        let state = self.state.clone();
+        futures::stream::unfold(0, move |last_index| {
+            let state = state.clone();
+            async move {
+                // 获取事件总数
+                let total_count = state.app_events.count() as usize;
+
+                if total_count > last_index {
+                    // 获取指定索引的事件
+                    let event = match state.app_events.get(last_index).await {
+                        Ok(Some(event)) => event,
+                        _ => return None,
+                    };
+
+                    // 转换事件类型
+                    let converted_event = match event {
+                        InternalQuizEvent::QuizCreated(quiz_set) => {
+                            // 转换为QuizSetView
+                            let mode_str = match quiz_set.mode {
+                                quiz::state::QuizMode::Public => "public",
+                                quiz::state::QuizMode::Registration => "registration",
+                            };
+                            let start_mode_str = match quiz_set.start_mode {
+                                quiz::state::QuizStartMode::Auto => "auto",
+                                quiz::state::QuizStartMode::Manual => "manual",
+                            };
+                            let quiz_set_view = QuizSetView {
+                                id: quiz_set.id,
+                                title: quiz_set.title.clone(),
+                                description: quiz_set.description.clone(),
+                                creator: quiz_set.creator,
+                                creator_nickname: quiz_set.creator_nickname.clone(),
+                                questions: quiz_set
+                                    .questions
+                                    .iter()
+                                    .map(|q| QuestionView {
+                                        id: q.id.clone(),
+                                        text: q.text.clone(),
+                                        options: q.options.clone(),
+                                        points: q.points,
+                                        question_type: q.question_type.clone(),
+                                    })
+                                    .collect(),
+                                start_time: quiz_set.start_time.micros().to_string(),
+                                end_time: quiz_set.end_time.micros().to_string(),
+                                created_at: quiz_set.created_at.micros().to_string(),
+                                mode: mode_str.to_string(),
+                                start_mode: start_mode_str.to_string(),
+                                is_started: quiz_set.is_started,
+                                registered_users: quiz_set.registered_users.clone(),
+                                participant_count: quiz_set.participant_count,
+                            };
+                            QuizEvent::QuizCreated(quiz_set_view)
+                        }
+                        InternalQuizEvent::AnswerSubmitted(attempt) => {
+                            // 转换为UserAttemptView
+                            let attempt_view = UserAttemptView {
+                                quiz_id: attempt.quiz_id,
+                                user: attempt.user,
+                                nickname: attempt.nickname,
+                                answers: attempt.answers,
+                                score: attempt.score,
+                                time_taken: attempt.time_taken,
+                                completed_at: attempt.completed_at.micros().to_string(),
+                            };
+                            QuizEvent::AnswerSubmitted(attempt_view)
+                        }
+                    };
+
+                    // 返回事件和新的索引
+                    Some((converted_event, last_index + 1))
+                } else {
+                    // 没有新事件，等待后重试
+                    futures::future::ready(()).await;
+                    // 返回一个空事件继续下一次迭代
+                    Some((
+                        QuizEvent::AnswerSubmitted(UserAttemptView {
+                            quiz_id: 0,
+                            user: "".to_string(),
+                            nickname: "".to_string(),
+                            answers: Vec::new(),
+                            score: 0,
+                            time_taken: 0,
+                            completed_at: "".to_string(),
+                        }),
+                        last_index,
+                    ))
+                }
+            }
+        })
+    }
+}
+
 impl WithServiceAbi for QuizService {
     type Abi = quiz::QuizAbi;
 }
@@ -513,10 +614,11 @@ impl Service for QuizService {
         let schema = Schema::build(
             QueryRoot {
                 state: self.state.clone(),
-                runtime: self.runtime.clone(),
             },
             Operation::mutation_root(self.runtime.clone()),
-            EmptySubscription,
+            SubscriptionRoot {
+                state: self.state.clone(),
+            },
         )
         .finish();
         schema.execute(request).await

@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
-import { useConnection } from '../contexts/ConnectionContext';
 import { useNavigate } from 'react-router-dom';
-import { GET_QUIZ_SETS } from '../graphql/quizQueries';
+import {
+  GET_QUIZ_SETS_APOLLO,
+  QUIZ_EVENTS_SUBSCRIPTION_APOLLO,
+} from '../graphql/quizQueries';
+import { useQuery, useSubscription } from '@apollo/client/react';
 import type { QuizSet } from '../graphql/quizTypes';
 
 const QuizList: React.FC = () => {
   const { primaryWallet } = useDynamicContext();
-  const { queryApplication, onNewBlock, offNewBlock } = useConnection();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
@@ -15,10 +17,6 @@ const QuizList: React.FC = () => {
   const [allQuizzes, setAllQuizzes] = useState<QuizSet[]>([]);
   const [filteredQuizzes, setFilteredQuizzes] = useState<QuizSet[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // 新增：查询去重相关状态 - 使用useRef避免函数重新创建
-  const isQueryingRef = useRef(false);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const pageSize = 6;
   const sortOptions = [
@@ -61,134 +59,73 @@ const QuizList: React.FC = () => {
     [searchTerm, sortBy],
   );
 
-  // Fetch quizzes with strict deduplication and debouncing
-  const fetchQuizzes = useCallback(
-    async (immediate = false) => {
-      const walletAddress = primaryWallet?.address;
-      if (!walletAddress) {
-        return;
-      }
+  // 使用 Apollo Client 查询主链数据
+  const {
+    loading: apolloLoading,
+    data,
+    refetch,
+  } = useQuery<{ quizSets?: QuizSet[] }>(GET_QUIZ_SETS_APOLLO, {
+    variables: {
+      limit: pageSize,
+      offset: (currentPage - 1) * pageSize,
+      sortBy: 'createdAt',
+      sortDirection: 'DESC',
+    },
+  });
 
-      // 严格检查：是否已在查询中
-      if (isQueryingRef.current) {
-        // 如果已经在查询中，但当前loading状态为true，重置它
-        if (loading) {
-          setLoading(false);
+  // 监听数据变化，当数据加载完成时更新测验列表
+  useEffect(() => {
+    if (data?.quizSets) {
+      setAllQuizzes(data.quizSets);
+    }
+  }, [data]);
+
+  // 设置加载状态为 Apollo 查询的加载状态
+  useEffect(() => {
+    setLoading(apolloLoading);
+  }, [apolloLoading]);
+
+  // 订阅测验事件
+  useSubscription(QUIZ_EVENTS_SUBSCRIPTION_APOLLO, {
+    onData: ({ data }: { data?: any }) => {
+      if (data.data?.quiz_events) {
+        const event = data.data.quiz_events;
+        // 根据事件类型更新测验列表
+        if (event.__typename === 'QuizCreated') {
+          // 如果是新测验创建事件，重新获取测验列表
+          refetch();
+        } else if (event.__typename === 'AnswerSubmitted') {
+          // 如果是答案提交事件，更新相应测验的参与者数量
+          setAllQuizzes(prevQuizzes => {
+            return prevQuizzes.map(quiz => {
+              if (quiz.id === event.quizId) {
+                return {
+                  ...quiz,
+                  participantCount: (quiz.participantCount || 0) + 1,
+                };
+              }
+              return quiz;
+            });
+          });
         }
-        return;
-      }
-
-      // 防抖逻辑：如果不是立即执行，设置延迟
-      if (!immediate && debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-
-      const executeQuery = async () => {
-        try {
-          isQueryingRef.current = true;
-          if (!immediate) setLoading(true);
-
-          // 再次检查钱包地址是否仍然有效
-          if (
-            !primaryWallet?.address ||
-            primaryWallet.address !== walletAddress
-          ) {
-            setLoading(false);
-            isQueryingRef.current = false;
-            return;
-          }
-
-          const variables = {
-            limit: pageSize,
-            offset: (currentPage - 1) * pageSize,
-            sortBy: 'createdAt',
-            sortDirection: 'DESC',
-          };
-
-          const result = (await queryApplication({
-            query: GET_QUIZ_SETS,
-            variables,
-          })) as { data?: { quizSets: QuizSet[] } };
-          console.log(result);
-          // 再次检查钱包地址
-          if (
-            !primaryWallet?.address ||
-            primaryWallet.address !== walletAddress
-          ) {
-            setLoading(false);
-            isQueryingRef.current = false;
-            return;
-          }
-
-          if (result.data?.quizSets) {
-            const quizSets = result.data.quizSets;
-            setAllQuizzes(quizSets);
-          }
-        } catch {
-          // 静默处理错误，避免控制台噪音
-        } finally {
-          isQueryingRef.current = false;
-          // 无论是否立即执行，都重置loading状态
-          // 确保在所有情况下loading状态都能正确退出
-          setLoading(false);
-          if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-            debounceTimerRef.current = null;
-          }
-        }
-      };
-
-      if (immediate) {
-        await executeQuery();
-      } else {
-        // 设置防抖延迟
-        const timer = setTimeout(executeQuery, 500); // 增加防抖时间到500ms
-        debounceTimerRef.current = timer;
       }
     },
-    [primaryWallet?.address, currentPage, pageSize, queryApplication],
-  );
+    onError: (error: any) => {
+      console.error('Subscription error:', error);
+    },
+  });
 
-  // 主要查询逻辑 - 钱包变化时立即执行
+  // 钱包变化时重新获取数据
   useEffect(() => {
     if (primaryWallet?.address) {
-      fetchQuizzes(true); // 立即执行，不防抖
+      refetch();
     }
-  }, [primaryWallet?.address, fetchQuizzes]);
+  }, [primaryWallet?.address, refetch]);
 
-  // 分页变化时防抖执行
+  // 分页变化时重新获取数据
   useEffect(() => {
-    if (primaryWallet?.address) {
-      fetchQuizzes(false); // 使用防抖
-    }
-  }, [currentPage, primaryWallet?.address, fetchQuizzes]);
-
-  // 组件卸载时清理
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
-
-  // 定义新区块事件处理函数
-  const handleNewBlock = useCallback(() => {
-    console.log('New block received, query use');
-    // 重新获取测验数据
-    fetchQuizzes(true);
-  }, [fetchQuizzes]);
-
-  // 注册新区块事件监听器，当收到新区块时刷新测验列表
-  useEffect(() => {
-    // 注册新区块事件回调
-    onNewBlock(handleNewBlock);
-
-    // 组件卸载时注销回调
-    return () => {
-      offNewBlock(handleNewBlock);
-    };
-  }, [onNewBlock, offNewBlock, handleNewBlock]);
+    refetch();
+  }, [currentPage, refetch]);
 
   useEffect(() => {
     // Re-process data when search/sort changes

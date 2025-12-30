@@ -73,6 +73,15 @@ pub struct UserAttempt {
     pub completed_at: Timestamp,
 }
 
+/// 应用事件类型
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum QuizEvent {
+    /// 新测验创建事件
+    QuizCreated(QuizSet),
+    /// 新答案提交事件
+    AnswerSubmitted(UserAttempt),
+}
+
 /// Quiz应用状态
 #[derive(RootView)]
 #[view(context = ViewStorageContext)]
@@ -83,6 +92,8 @@ pub struct QuizState {
     pub user_attempts: MapView<(u64, String), UserAttempt>,
     /// 记录答题事件用于排行榜计算
     pub quiz_events: LogView<UserAttempt>,
+    /// 应用事件日志
+    pub app_events: LogView<QuizEvent>,
     /// 下一个可用的Quiz ID
     pub next_quiz_id: RegisterView<u64>,
     /// 用户参与的测验集合 (WalletAddress -> Vec<QuizId>)

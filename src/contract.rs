@@ -5,7 +5,7 @@
 
 mod state;
 
-use linera_sdk::linera_base_types::{TimeDelta, ChainId};
+use linera_sdk::linera_base_types::{ChainId, TimeDelta};
 use linera_sdk::{
     linera_base_types::WithContractAbi,
     views::{RootView, View},
@@ -13,8 +13,12 @@ use linera_sdk::{
 };
 use log::{debug, error, info};
 
-use crate::state::{Question, QuizMode, QuizSet, QuizStartMode, QuizState, User, UserAttempt};
-use quiz::{CreateQuizParams, LeaderboardEntry, Message, Operation, SetNicknameParams, SubmitAnswersParams};
+use crate::state::{
+    Question, QuizEvent, QuizMode, QuizSet, QuizStartMode, QuizState, User, UserAttempt,
+};
+use quiz::{
+    CreateQuizParams, LeaderboardEntry, Message, Operation, SetNicknameParams, SubmitAnswersParams,
+};
 
 pub struct QuizContract {
     state: QuizState,
@@ -71,20 +75,40 @@ impl Contract for QuizContract {
 
     async fn execute_message(&mut self, message: Message) {
         match message {
-            Message::SetNickname { from_chain_id, params } => {
-                self.handle_cross_chain_set_nickname(from_chain_id, params).await
+            Message::SetNickname {
+                from_chain_id,
+                params,
+            } => {
+                self.handle_cross_chain_set_nickname(from_chain_id, params)
+                    .await
             }
-            Message::CreateQuiz { from_chain_id, params } => {
-                self.handle_cross_chain_create_quiz(from_chain_id, params).await
+            Message::CreateQuiz {
+                from_chain_id,
+                params,
+            } => {
+                self.handle_cross_chain_create_quiz(from_chain_id, params)
+                    .await
             }
-            Message::SubmitAnswers { from_chain_id, params } => {
-                self.handle_cross_chain_submit_answers(from_chain_id, params).await
+            Message::SubmitAnswers {
+                from_chain_id,
+                params,
+            } => {
+                self.handle_cross_chain_submit_answers(from_chain_id, params)
+                    .await
             }
-            Message::StartQuiz { from_chain_id, quiz_id } => {
-                self.handle_cross_chain_start_quiz(from_chain_id, quiz_id).await
+            Message::StartQuiz {
+                from_chain_id,
+                quiz_id,
+            } => {
+                self.handle_cross_chain_start_quiz(from_chain_id, quiz_id)
+                    .await
             }
-            Message::RegisterForQuiz { from_chain_id, quiz_id } => {
-                self.handle_cross_chain_register_for_quiz(from_chain_id, quiz_id).await
+            Message::RegisterForQuiz {
+                from_chain_id,
+                quiz_id,
+            } => {
+                self.handle_cross_chain_register_for_quiz(from_chain_id, quiz_id)
+                    .await
             }
         }
     }
@@ -133,7 +157,7 @@ impl QuizContract {
 
         // 发送跨链消息
         self.runtime.send_message(main_chain_id, message);
-        
+
         // 跨链操作成功返回
         Ok(())
     }
@@ -161,10 +185,7 @@ impl QuizContract {
         params: CreateQuizParams,
     ) {
         let title = params.title.clone();
-        info!(
-            "处理来自链 {} 的跨链创建测验请求: {}",
-            from_chain_id, title
-        );
+        info!("处理来自链 {} 的跨链创建测验请求: {}", from_chain_id, title);
 
         // 在主链上直接执行创建测验操作
         let _ = self.create_quiz(params).await;
@@ -187,11 +208,7 @@ impl QuizContract {
     }
 
     /// 处理跨链开始测验
-    async fn handle_cross_chain_start_quiz(
-        &mut self,
-        from_chain_id: ChainId,
-        quiz_id: u64,
-    ) {
+    async fn handle_cross_chain_start_quiz(&mut self, from_chain_id: ChainId, quiz_id: u64) {
         info!(
             "处理来自链 {} 的跨链开始测验请求，测验ID: {}",
             from_chain_id, quiz_id
@@ -202,11 +219,7 @@ impl QuizContract {
     }
 
     /// 处理跨链报名测验
-    async fn handle_cross_chain_register_for_quiz(
-        &mut self,
-        from_chain_id: ChainId,
-        quiz_id: u64,
-    ) {
+    async fn handle_cross_chain_register_for_quiz(&mut self, from_chain_id: ChainId, quiz_id: u64) {
         info!(
             "处理来自链 {} 的跨链报名测验请求，测验ID: {}",
             from_chain_id, quiz_id
@@ -454,6 +467,11 @@ impl QuizContract {
             participant_count: 0,
         };
 
+        // 发布QuizCreated事件（在插入前，避免移动值问题）
+        self.state
+            .app_events
+            .push(QuizEvent::QuizCreated(quiz_set.clone()));
+
         // 存储新Quiz
         self.state
             .quiz_sets
@@ -479,6 +497,7 @@ impl QuizContract {
             .checked_add(1)
             .ok_or(quiz::QuizError::InternalError)?;
         self.state.next_quiz_id.set(next_id);
+
         Ok(())
     }
 
@@ -624,7 +643,11 @@ impl QuizContract {
             .insert(&(params.quiz_id, wallet_address.clone()), attempt.clone())
             .map_err(|_| quiz::QuizError::InternalError)?;
         // 记录答题事件
-        self.state.quiz_events.push(attempt);
+        self.state.quiz_events.push(attempt.clone());
+        // 发布AnswerSubmitted事件
+        self.state
+            .app_events
+            .push(QuizEvent::AnswerSubmitted(attempt));
 
         // 更新测验参与者列表
         let mut participants = self
@@ -812,6 +835,4 @@ impl QuizContract {
             .map_err(|_| quiz::QuizError::InternalError)?;
         Ok(())
     }
-
-
 }
